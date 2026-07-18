@@ -76,56 +76,58 @@ export default function LandingPage() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="relative px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10 min-h-screen justify-center">
+      <section className="relative flex flex-col items-center text-center min-h-screen justify-center w-full border-b border-neutral-200 dark:border-neutral-800">
         {/* Subtle Image Background for Hero */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
-          className="absolute inset-0 z-0 overflow-hidden rounded-b-[3rem] opacity-30 dark:opacity-40 pointer-events-none"
+          className="absolute inset-0 z-0 overflow-hidden opacity-30 dark:opacity-40 pointer-events-none"
         >
           <img src="/images/hero_bg.png" className="w-full h-full object-cover" alt="Hero background" />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/50 dark:from-neutral-950 dark:via-neutral-950/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/60 dark:from-neutral-950 dark:via-neutral-950/60 to-transparent" />
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9, y: 30 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} // smooth spring-like ease
-          className="space-y-6 max-w-3xl relative z-10"
-        >
-          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              carouself
-            </span>
-          </h1>
-          <p className="text-2xl md:text-3xl text-neutral-800 dark:text-neutral-200 font-bold leading-relaxed">
-            A carousel of your past selves. An act of self-care.
-          </p>
-          <p className="text-lg text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed max-w-2xl mx-auto">
-            A brutally secure, zero-knowledge digital journal. Your thoughts, encrypted directly on your device before they ever touch the network.
-          </p>
-        </motion.div>
+        <div className="relative z-10 px-6 max-w-7xl mx-auto flex flex-col items-center space-y-10 pt-20">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6 max-w-3xl"
+          >
+            <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight">
+              <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                carouself
+              </span>
+            </h1>
+            <p className="text-2xl md:text-3xl text-neutral-800 dark:text-neutral-200 font-bold leading-relaxed">
+              A carousel of your past selves. An act of self-care.
+            </p>
+            <p className="text-lg text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed max-w-2xl mx-auto">
+              A brutally secure, zero-knowledge digital journal. Your thoughts, encrypted directly on your device before they ever touch the network.
+            </p>
+          </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 z-10"
-        >
-          <Link 
-            href="/signup" 
-            className="w-full sm:w-auto px-8 py-4 bg-amber-600 hover:bg-amber-500 text-neutral-900 dark:text-white font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6"
           >
-            Create Secure Vault <ArrowRight size={20} />
-          </Link>
-          <Link 
-            href="/login" 
-            className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-semibold rounded-xl transition-all"
-          >
-            Unlock Existing
-          </Link>
-        </motion.div>
+            <Link 
+              href="/signup" 
+              className="w-full sm:w-auto px-8 py-4 bg-amber-600 hover:bg-amber-500 text-neutral-900 dark:text-white font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              Create Secure Vault <ArrowRight size={20} />
+            </Link>
+            <Link 
+              href="/login" 
+              className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-semibold rounded-xl transition-all"
+            >
+              Unlock Existing
+            </Link>
+          </motion.div>
+        </div>
       </section>
 
       {/* Interactive Big Carousel Section */}
