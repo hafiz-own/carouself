@@ -82,9 +82,9 @@ export default function LandingPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
-          className="absolute inset-0 z-0 overflow-hidden opacity-30 dark:opacity-40 pointer-events-none"
+          className="absolute inset-0 z-0 overflow-hidden opacity-40 dark:opacity-50 pointer-events-none"
         >
-          <img src="/images/hero_bg.png" className="w-full h-full object-cover" alt="Hero background" />
+          <img src="/images/hero_bg.png" className="w-full h-full object-cover blur-[8px] scale-105" alt="Hero background" />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/60 dark:from-neutral-950 dark:via-neutral-950/60 to-transparent" />
         </motion.div>
 
