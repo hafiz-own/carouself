@@ -84,7 +84,7 @@ export default function LandingPage() {
           transition={{ duration: 1.5 }}
           className="absolute inset-0 z-0 overflow-hidden opacity-40 dark:opacity-50 pointer-events-none"
         >
-          <img src="/images/hero_bg.png" className="w-full h-full object-cover blur-[8px] scale-105" alt="Hero background" />
+          <img src="/images/hero_bg.png" className="w-full h-full object-cover blur-sm scale-105" alt="Hero background" />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/60 dark:from-neutral-950 dark:via-neutral-950/60 to-transparent" />
         </motion.div>
 
@@ -93,17 +93,17 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-6 max-w-3xl"
+            className="space-y-6 max-w-4xl bg-white/60 dark:bg-black/40 backdrop-blur-lg p-8 md:p-12 rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-2xl"
           >
             <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight">
               <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 carouself
               </span>
             </h1>
-            <p className="text-2xl md:text-3xl text-neutral-800 dark:text-neutral-200 font-bold leading-relaxed">
+            <p className="text-2xl md:text-3xl text-neutral-900 dark:text-neutral-100 font-bold leading-relaxed">
               A carousel of your past selves. An act of self-care.
             </p>
-            <p className="text-lg text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg text-neutral-700 dark:text-neutral-300 font-medium leading-relaxed max-w-2xl mx-auto">
               A brutally secure, zero-knowledge digital journal. Your thoughts, encrypted directly on your device before they ever touch the network.
             </p>
           </motion.div>
