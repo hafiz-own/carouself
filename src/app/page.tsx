@@ -1,20 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Lock, Shield, PenTool, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Lock, Shield, PenTool, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const mockEntries = [
-  { date: "Oct 12", title: "A quiet morning in Kyoto", preview: "The matcha was bitter but the air was perfectly crisp. I finally feel like..." },
-  { date: "Oct 15", title: "Reflections on turning 30", preview: "I thought I'd have it all figured out by now. Turns out, the confusion just..." },
-  { date: "Oct 22", title: "Shipped the MVP!", preview: "After three months of late nights, we finally hit deploy. The adrenaline..." },
-  { date: "Nov 02", title: "Conversations with Sarah", preview: "She mentioned something about letting go of control. I need to unpack that..." },
-  { date: "Nov 08", title: "Winter is coming", preview: "The leaves are gone. Got the heavy coats out. There is a strange comfort in..." },
+  { date: "Oct 12", title: "A quiet morning in Kyoto", preview: "The matcha was bitter but the air was perfectly crisp. I finally feel like I can breathe again...", image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800" },
+  { date: "Oct 15", title: "Reflections on turning 30", preview: "I thought I'd have it all figured out by now. Turns out, the confusion just changes flavor...", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800" },
+  { date: "Oct 22", title: "Shipped the MVP!", preview: "After three months of late nights, we finally hit deploy. The adrenaline is unreal right now...", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800" },
+  { date: "Nov 02", title: "Conversations with Sarah", preview: "She mentioned something about letting go of control. I need to unpack that. Why do I hold on so tight?", image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800" },
+  { date: "Nov 08", title: "Winter is coming", preview: "The leaves are gone. Got the heavy coats out. There is a strange comfort in the isolation of snow...", image: "https://images.unsplash.com/photo-1478719059408-592965723cbc?q=80&w=800" },
 ];
 
 export default function LandingPage() {
   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logic for carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (carouselRef.current) {
+        const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth;
+        if (carouselRef.current.scrollLeft >= maxScroll - 10) {
+          carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          carouselRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+        }
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,7 +76,12 @@ export default function LandingPage() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10">
+      <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10 min-h-[80vh] justify-center">
+        {/* Subtle Image Background for Hero */}
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+          <img src="https://images.unsplash.com/photo-1455390582262-044cdead27d8?q=80&w=2000" className="w-full h-full object-cover" alt="Hero background" />
+        </div>
+
         <div className="space-y-6 max-w-3xl relative z-10">
           <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight">
             <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -84,25 +112,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Infinite Marquee Section */}
-      <section className="py-20 relative overflow-hidden border-y border-neutral-200 dark:border-neutral-800/50 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
-        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-neutral-50 dark:from-neutral-950 to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-neutral-50 dark:from-neutral-950 to-transparent z-10" />
-        
-        <div className="flex overflow-hidden">
-          {/* We duplicate the mockEntries array twice to create a seamless infinite loop */}
-          <div className="animate-marquee flex items-center gap-6 px-3">
-            {[...mockEntries, ...mockEntries].map((entry, idx) => (
-              <div 
-                key={idx} 
-                className="w-80 h-48 flex-shrink-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-amber-500/50 group cursor-default"
-              >
-                <div className="text-xs font-mono text-amber-600 dark:text-amber-500 mb-3">{entry.date}</div>
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-2 group-hover:text-amber-500 transition-colors">{entry.title}</h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{entry.preview}</p>
-              </div>
-            ))}
+      {/* Interactive Big Carousel Section */}
+      <section className="py-24 relative overflow-hidden bg-neutral-100/50 dark:bg-neutral-900/20 border-y border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-7xl mx-auto px-6 mb-8 flex justify-between items-end">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight mb-2">Your Private Gallery</h2>
+            <p className="text-neutral-500">Reflect on your past entries beautifully.</p>
           </div>
+          <div className="flex gap-3">
+            <button onClick={() => scrollCarousel('left')} className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
+              <ChevronLeft size={24} />
+            </button>
+            <button onClick={() => scrollCarousel('right')} className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
+              <ChevronRight size={24} />
+            </button>
+          </div>
+        </div>
+
+        <div 
+          ref={carouselRef}
+          className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-8 px-6 md:px-12 pb-12 pt-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {mockEntries.map((entry, idx) => (
+            <div 
+              key={idx} 
+              className="snap-center shrink-0 w-[85vw] md:w-[500px] h-[600px] flex flex-col bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(245,158,11,0.3)] group cursor-grab active:cursor-grabbing"
+            >
+              <div className="h-[55%] relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10" />
+                <img src={entry.image} alt={entry.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute top-6 left-6 z-20 bg-black/40 backdrop-blur-md text-white text-xs font-bold font-mono px-3 py-1.5 rounded-full border border-white/20">
+                  {entry.date}
+                </div>
+              </div>
+              <div className="h-[45%] p-8 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-4 group-hover:text-amber-500 transition-colors">{entry.title}</h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed text-lg">{entry.preview}</p>
+                </div>
+                <div className="flex items-center text-amber-500 font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                  Read Full Entry <ArrowRight size={16} className="ml-2" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -116,10 +170,15 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Large Feature */}
           <div className="md:col-span-2 bg-gradient-to-br from-neutral-100 to-white dark:from-neutral-900 dark:to-black border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+            {/* Background Image for Large Box */}
+            <div className="absolute inset-0 opacity-10 dark:opacity-[0.05] group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity duration-700">
+              <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1200" alt="Code crypto" className="w-full h-full object-cover" />
+            </div>
+
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500 z-10">
               <Shield size={200} className="text-amber-500" />
             </div>
-            <div className="relative z-10 max-w-md">
+            <div className="relative z-20 max-w-md">
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6">
                 <Shield className="text-amber-500" size={24} />
               </div>
@@ -187,6 +246,7 @@ export default function LandingPage() {
                 name="name" 
                 id="name" 
                 required 
+                suppressHydrationWarning
                 placeholder="John Doe"
                 className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all"
               />
@@ -198,6 +258,7 @@ export default function LandingPage() {
                 name="email" 
                 id="email" 
                 required 
+                suppressHydrationWarning
                 placeholder="john@example.com"
                 className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all"
               />

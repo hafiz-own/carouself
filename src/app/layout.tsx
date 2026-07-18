@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { TRPCProvider } from "@/lib/trpc/Provider";
 import "./globals.css";
 
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "react-hot-toast";
 import { EncryptionProvider } from "@/lib/crypto/EncryptionContext";
+import { GlobalHeader } from "@/components/GlobalHeader";
 
 export default function RootLayout({
   children,
@@ -34,7 +36,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -52,6 +56,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <TRPCProvider>
             <EncryptionProvider>
+              <GlobalHeader />
               {children}
             </EncryptionProvider>
           </TRPCProvider>
