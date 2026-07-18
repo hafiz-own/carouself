@@ -29,6 +29,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.42.2",
     "html-to-text": "^10.0.0",
     "jose": "^6.2.3",
     "jszip": "^3.10.1",

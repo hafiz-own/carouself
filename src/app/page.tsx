@@ -2,8 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Lock, Shield, PenTool, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Lock, Shield, PenTool, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, HardDriveDownload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 const mockEntries = [
   { date: "Oct 12", title: "A quiet morning in Kyoto", preview: "The matcha was bitter but the air was perfectly crisp. I finally feel like I can breathe again...", image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800" },
@@ -44,7 +45,6 @@ export default function LandingPage() {
     setFormStatus('submitting');
     
     const formData = new FormData(e.currentTarget);
-    // User will add their Web3Forms Access Key in the .env.local file
     formData.append("access_key", process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "YOUR_ACCESS_KEY_HERE");
 
     try {
@@ -78,11 +78,21 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10 min-h-[80vh] justify-center">
         {/* Subtle Image Background for Hero */}
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-[0.03] dark:opacity-[0.05] pointer-events-none"
+        >
           <img src="https://images.unsplash.com/photo-1455390582262-044cdead27d8?q=80&w=2000" className="w-full h-full object-cover" alt="Hero background" />
-        </div>
+        </motion.div>
 
-        <div className="space-y-6 max-w-3xl relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} // smooth spring-like ease
+          className="space-y-6 max-w-3xl relative z-10"
+        >
           <h1 className="text-6xl md:text-8xl font-extrabold tracking-tight">
             <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               carouself
@@ -94,9 +104,14 @@ export default function LandingPage() {
           <p className="text-lg text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed max-w-2xl mx-auto">
             A brutally secure, zero-knowledge digital journal. Your thoughts, encrypted directly on your device before they ever touch the network.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 z-10"
+        >
           <Link 
             href="/signup" 
             className="w-full sm:w-auto px-8 py-4 bg-amber-600 hover:bg-amber-500 text-neutral-900 dark:text-white font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
@@ -109,11 +124,17 @@ export default function LandingPage() {
           >
             Unlock Existing
           </Link>
-        </div>
+        </motion.div>
       </section>
 
       {/* Interactive Big Carousel Section */}
-      <section className="py-24 relative overflow-hidden bg-neutral-100/50 dark:bg-neutral-900/20 border-y border-neutral-200 dark:border-neutral-800">
+      <motion.section 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="py-24 relative overflow-hidden bg-neutral-100/50 dark:bg-neutral-900/20 border-y border-neutral-200 dark:border-neutral-800"
+      >
         <div className="max-w-7xl mx-auto px-6 mb-8 flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-bold tracking-tight mb-2">Your Private Gallery</h2>
@@ -158,23 +179,34 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Bento Grid Feature Section */}
       <section className="py-32 px-6 max-w-6xl mx-auto space-y-16">
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4 max-w-2xl mx-auto"
+        >
           <h2 className="text-3xl md:text-5xl font-bold">Uncompromising Security.</h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">We built carouself with paranoid-level encryption, so you can write with absolute peace of mind.</p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Large Feature */}
-          <div className="md:col-span-2 bg-gradient-to-br from-neutral-100 to-white dark:from-neutral-900 dark:to-black border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl relative overflow-hidden group">
-            {/* Background Image for Large Box */}
+          
+          {/* Card 1: Zero Knowledge (Large) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="md:col-span-2 bg-gradient-to-br from-neutral-100 to-white dark:from-neutral-900 dark:to-black border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl relative overflow-hidden group"
+          >
             <div className="absolute inset-0 opacity-10 dark:opacity-[0.05] group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity duration-700">
               <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1200" alt="Code crypto" className="w-full h-full object-cover" />
             </div>
-
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500 z-10">
               <Shield size={200} className="text-amber-500" />
             </div>
@@ -192,25 +224,38 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> Complete data ownership</li>
               </ul>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Medium Features */}
-          <div className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl flex flex-col justify-between group hover:border-purple-500/30 transition-colors">
+          {/* Card 2: Military Primitives */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl flex flex-col justify-between group hover:border-purple-500/30 transition-colors"
+          >
             <div>
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6">
                 <Lock className="text-purple-400" size={24} />
               </div>
               <h3 className="text-xl font-bold mb-4">Military Grade Primitives</h3>
               <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
-                Secured exclusively with XChaCha20-Poly1305 and Argon2id password hashing. The same modern cryptographic primitives trusted by global security infrastructure.
+                Secured exclusively with XChaCha20-Poly1305 and Argon2id password hashing. The exact same primitives trusted by global security infrastructure.
               </p>
             </div>
             <div className="mt-8 font-mono text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 p-3 rounded-lg border border-purple-500/20">
               crypto.secretbox.easy()
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl flex flex-col justify-between group hover:border-pink-500/30 transition-colors">
+          {/* Card 3: Zen Mode */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl flex flex-col justify-between group hover:border-pink-500/30 transition-colors"
+          >
             <div>
               <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-6">
                 <PenTool className="text-pink-400" size={24} />
@@ -225,22 +270,54 @@ export default function LandingPage() {
               <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-800 rounded mb-2"></div>
               <div className="w-3/4 h-2 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
             </div>
-          </div>
+          </motion.div>
+
+          {/* Card 4: Data Export (Large) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="md:col-span-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl flex flex-col justify-between relative overflow-hidden group hover:border-blue-500/30 transition-colors"
+          >
+            <div className="absolute inset-0 opacity-10 dark:opacity-[0.03] group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity duration-700">
+              <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1200" alt="Server tech" className="w-full h-full object-cover" />
+            </div>
+
+            <div className="relative z-20 max-w-md">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                <HardDriveDownload className="text-blue-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold mb-4">Absolute Ownership</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed mb-6">
+                You are not locked into our ecosystem. Because everything is encrypted client-side, we built a one-click export button. Download your entire journal vault as a portable ZIP file instantly, at any time.
+              </p>
+              <button className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg flex items-center gap-2 shadow-lg shadow-blue-500/20 opacity-90 cursor-default">
+                <HardDriveDownload size={16} /> Export Vault (.zip)
+              </button>
+            </div>
+          </motion.div>
 
         </div>
       </section>
 
-      {/* Reach Out / Contact Section */}
-      <section className="py-24 px-6 relative">
-        <div className="max-w-xl mx-auto bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-[2rem] shadow-2xl relative z-10">
+      {/* Modern Contact Section */}
+      <motion.section 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+        className="py-32 px-6 relative"
+      >
+        <div className="max-w-xl mx-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl shadow-2xl relative z-10">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">Reach Out</h2>
+            <h2 className="text-3xl font-bold mb-3 text-neutral-900 dark:text-white">Reach Out</h2>
             <p className="text-neutral-600 dark:text-neutral-400">Have a question or just want to say hi? Drop us a message below.</p>
           </div>
 
           <form onSubmit={handleContactSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <label htmlFor="name" className="text-sm font-medium ml-1">Name</label>
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
               <input 
                 type="text" 
                 name="name" 
@@ -248,11 +325,11 @@ export default function LandingPage() {
                 required 
                 suppressHydrationWarning
                 placeholder="John Doe"
-                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all"
+                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
               />
             </div>
-            <div className="space-y-1">
-              <label htmlFor="email" className="text-sm font-medium ml-1">Email</label>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
               <input 
                 type="email" 
                 name="email" 
@@ -260,41 +337,40 @@ export default function LandingPage() {
                 required 
                 suppressHydrationWarning
                 placeholder="john@example.com"
-                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all"
+                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
               />
             </div>
-            <div className="space-y-1">
-              <label htmlFor="message" className="text-sm font-medium ml-1">Message</label>
+            <div className="space-y-2">
+              <label htmlFor="message" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Message</label>
               <textarea 
                 name="message" 
                 id="message" 
                 required 
                 rows={4}
                 placeholder="How can we help you?"
-                className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all resize-none custom-scrollbar"
+                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all resize-none custom-scrollbar placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
               />
             </div>
 
-            {/* Hidden honeypot for Web3Forms anti-spam */}
             <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
 
             <button 
               type="submit" 
               disabled={formStatus === 'submitting' || formStatus === 'success'}
-              className="w-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
             >
               {formStatus === 'submitting' && <span className="animate-pulse">Sending...</span>}
-              {formStatus === 'success' && <><CheckCircle2 size={20} /> Sent Successfully</>}
+              {formStatus === 'success' && <><CheckCircle2 size={18} /> Sent Successfully</>}
               {formStatus === 'idle' && 'Send Message'}
             </button>
           </form>
         </div>
         
         {/* Footer */}
-        <footer className="mt-24 text-center text-sm text-neutral-500 dark:text-neutral-500 pb-8">
+        <footer className="mt-24 relative z-10 text-center text-sm text-neutral-500 pb-8">
           <p>&copy; {new Date().getFullYear()} carouself. All rights reserved.</p>
         </footer>
-      </section>
+      </motion.section>
 
     </div>
   );
