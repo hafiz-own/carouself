@@ -7,11 +7,11 @@ import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 const mockEntries = [
-  { date: "Oct 12", title: "A quiet morning in Kyoto", preview: "The matcha was bitter but the air was perfectly crisp. I finally feel like I can breathe again...", image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800" },
-  { date: "Oct 15", title: "Reflections on turning 30", preview: "I thought I'd have it all figured out by now. Turns out, the confusion just changes flavor...", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800" },
-  { date: "Oct 22", title: "Shipped the MVP!", preview: "After three months of late nights, we finally hit deploy. The adrenaline is unreal right now...", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800" },
-  { date: "Nov 02", title: "Conversations with Sarah", preview: "She mentioned something about letting go of control. I need to unpack that. Why do I hold on so tight?", image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800" },
-  { date: "Nov 08", title: "Winter is coming", preview: "The leaves are gone. Got the heavy coats out. There is a strange comfort in the isolation of snow...", image: "https://images.unsplash.com/photo-1478719059408-592965723cbc?q=80&w=800" },
+  { date: "Oct 12", title: "A quiet morning in Kyoto", preview: "The matcha was bitter but the air was perfectly crisp. I finally feel like I can breathe again...", image: "/images/entry_kyoto.png" },
+  { date: "Oct 15", title: "Reflections on turning 30", preview: "I thought I'd have it all figured out by now. Turns out, the confusion just changes flavor...", image: "/images/entry_30.png" },
+  { date: "Oct 22", title: "Shipped the MVP!", preview: "After three months of late nights, we finally hit deploy. The adrenaline is unreal right now...", image: "/images/entry_mvp.png" },
+  { date: "Nov 02", title: "Conversations with Sarah", preview: "She mentioned something about letting go of control. I need to unpack that. Why do I hold on so tight?", image: "/images/entry_conversation.png" },
+  { date: "Nov 08", title: "Winter is coming", preview: "The leaves are gone. Got the heavy coats out. There is a strange comfort in the isolation of snow...", image: "/images/entry_winter.png" },
 ];
 
 export default function LandingPage() {
@@ -76,15 +76,16 @@ export default function LandingPage() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10 min-h-[80vh] justify-center">
+      <section className="relative px-6 max-w-7xl mx-auto flex flex-col items-center text-center space-y-10 min-h-screen justify-center">
         {/* Subtle Image Background for Hero */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
-          className="absolute inset-0 z-0 overflow-hidden rounded-3xl opacity-[0.03] dark:opacity-[0.05] pointer-events-none"
+          className="absolute inset-0 z-0 overflow-hidden rounded-b-[3rem] opacity-30 dark:opacity-40 pointer-events-none"
         >
-          <img src="https://images.unsplash.com/photo-1455390582262-044cdead27d8?q=80&w=2000" className="w-full h-full object-cover" alt="Hero background" />
+          <img src="/images/hero_bg.png" className="w-full h-full object-cover" alt="Hero background" />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/50 dark:from-neutral-950 dark:via-neutral-950/50 to-transparent" />
         </motion.div>
 
         <motion.div 
@@ -309,36 +310,38 @@ export default function LandingPage() {
         transition={{ duration: 0.8 }}
         className="py-32 px-6 relative"
       >
-        <div className="max-w-xl mx-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl shadow-2xl relative z-10">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl shadow-2xl relative z-10 transition-all duration-500 hover:border-amber-500/50 hover:shadow-[0_0_40px_rgba(245,158,11,0.15)] group">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-neutral-900 dark:text-white">Reach Out</h2>
+            <h2 className="text-3xl font-bold mb-3 text-neutral-900 dark:text-white group-hover:text-amber-500 transition-colors">Reach Out</h2>
             <p className="text-neutral-600 dark:text-neutral-400">Have a question or just want to say hi? Drop us a message below.</p>
           </div>
 
           <form onSubmit={handleContactSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
-              <input 
-                type="text" 
-                name="name" 
-                id="name" 
-                required 
-                suppressHydrationWarning
-                placeholder="John Doe"
-                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
-              <input 
-                type="email" 
-                name="email" 
-                id="email" 
-                required 
-                suppressHydrationWarning
-                placeholder="john@example.com"
-                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  id="name" 
+                  required 
+                  suppressHydrationWarning
+                  placeholder="John Doe"
+                  className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  id="email" 
+                  required 
+                  suppressHydrationWarning
+                  placeholder="john@example.com"
+                  className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label htmlFor="message" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Message</label>
@@ -357,7 +360,7 @@ export default function LandingPage() {
             <button 
               type="submit" 
               disabled={formStatus === 'submitting' || formStatus === 'success'}
-              className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 border border-transparent hover:border-amber-500/50"
             >
               {formStatus === 'submitting' && <span className="animate-pulse">Sending...</span>}
               {formStatus === 'success' && <><CheckCircle2 size={18} /> Sent Successfully</>}
