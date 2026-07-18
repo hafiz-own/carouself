@@ -137,7 +137,7 @@ export default function SignupPage() {
             Join carouself
           </h1>
           <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-            End-to-end encrypted journaling. Your thoughts, cryptographically yours.
+            Start your journey of self-care. End-to-end encrypted.
           </p>
         </div>
 

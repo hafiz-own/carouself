@@ -13,7 +13,10 @@ export default function LandingPage() {
               carouself
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-neutral-600 dark:text-neutral-400 font-medium max-w-xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-neutral-800 dark:text-neutral-200 font-bold max-w-2xl mx-auto leading-relaxed mt-4">
+            A carousel of your past selves. An act of self-care.
+          </p>
+          <p className="text-md md:text-lg text-neutral-600 dark:text-neutral-400 font-medium max-w-xl mx-auto leading-relaxed">
             A brutally secure, zero-knowledge digital journal. Your thoughts, encrypted directly on your device.
           </p>
         </div>

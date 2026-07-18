@@ -89,10 +89,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-white to-neutral-500 bg-clip-text text-transparent">
-            Welcome back
+            Welcome back to yourself
           </h1>
           <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-            Unlock your private journal
+            Unlock the carousel of your thoughts
           </p>
         </div>
 
