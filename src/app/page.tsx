@@ -318,9 +318,9 @@ export default function LandingPage() {
             <p className="text-neutral-600 dark:text-neutral-400">Have a question or just want to say hi? Drop us a message below.</p>
           </div>
 
-          <form onSubmit={handleContactSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+          <form onSubmit={handleContactSubmit} className="space-y-6" suppressHydrationWarning>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6" suppressHydrationWarning>
+              <div className="space-y-2" suppressHydrationWarning>
                 <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
                 <input 
                   type="text" 
@@ -332,7 +332,7 @@ export default function LandingPage() {
                   className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2" suppressHydrationWarning>
                 <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
                 <input 
                   type="email" 
@@ -345,7 +345,7 @@ export default function LandingPage() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <label htmlFor="message" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Message</label>
               <textarea 
                 name="message" 

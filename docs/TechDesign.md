@@ -106,3 +106,4 @@ Because data is end-to-end encrypted, search **must** run entirely on the client
 - All tRPC errors are structured automatically. Custom `TRPCError` instances will be thrown.
 - Sensitive information (`auth_key`, `ciphertext`, passwords) will NEVER be logged.
 - The `crypto` module will be strictly unit tested in isolation to verify correct behavior before any UI integration.
+

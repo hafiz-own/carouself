@@ -24,14 +24,21 @@ interface JournalEditorProps {
   // In a full implementation, we'd load existing entries. For MVP, we start fresh.
   initialTitle?: string;
   initialContent?: string; 
+  initialMood?: string;
+  initialWeather?: string;
   entryId?: string;
   onDelete?: () => void;
 }
 
-export function JournalEditor({ encKey, initialTitle = '', initialContent = '', entryId: initialEntryId, onDelete }: JournalEditorProps) {
+const MOODS = ['😌', '😊', '😂', '😎', '🤔', '😔', '😭', '😡', '😴', '🤯'];
+const WEATHERS = ['☀️', '🌤️', '☁️', '🌧️', '⛈️', '🌨️', '💨', '🌫️'];
+
+export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete }: JournalEditorProps) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'unsaved'>('saved');
   const [entryId, setEntryId] = useState<string | undefined>(initialEntryId);
   const [title, setTitle] = useState(initialTitle);
+  const [mood, setMood] = useState(initialMood);
+  const [weather, setWeather] = useState(initialWeather);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
@@ -46,6 +53,8 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   const stateRef = useRef({ 
     title, 
     content: initialContent, 
+    mood,
+    weather,
     entryId, 
     saveStatus: 'saved' as 'saved' | 'saving' | 'error' | 'unsaved' 
   });
@@ -80,7 +89,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
 
       // Autosave after 2000ms of inactivity
       debounceTimerRef.current = setTimeout(() => {
-        handleSave(title, editor.getHTML());
+        handleSave(title, editor.getHTML(), mood, weather);
       }, 2000);
     },
   });
@@ -92,12 +101,32 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       clearTimeout(debounceTimerRef.current);
     }
     debounceTimerRef.current = setTimeout(() => {
-      handleSave(e.target.value, editor?.getHTML() || '');
+      handleSave(e.target.value, editor?.getHTML() || '', mood, weather);
+    }, 2000);
+  };
+
+  const handleMoodChange = (newMood: string) => {
+    const val = mood === newMood ? '' : newMood;
+    setMood(val);
+    setSaveStatus('unsaved');
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      handleSave(title, editor?.getHTML() || '', val, weather);
+    }, 2000);
+  };
+
+  const handleWeatherChange = (newWeather: string) => {
+    const val = weather === newWeather ? '' : newWeather;
+    setWeather(val);
+    setSaveStatus('unsaved');
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      handleSave(title, editor?.getHTML() || '', mood, val);
     }, 2000);
   };
 
   // Keep stateRef in sync with the latest state
-  stateRef.current = { title, content: editor?.getHTML() || '', entryId, saveStatus };
+  stateRef.current = { title, content: editor?.getHTML() || '', mood, weather, entryId, saveStatus };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,13 +138,13 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  const handleSave = async (currentTitle: string, htmlContent: string, targetEntryId?: string) => {
+  const handleSave = async (currentTitle: string, htmlContent: string, currentMood: string, currentWeather: string, targetEntryId?: string) => {
     const isBackgroundSave = targetEntryId !== undefined;
     const saveId = isBackgroundSave ? targetEntryId : entryId;
     
     if (!isBackgroundSave) setSaveStatus('saving');
     try {
-      const payload = JSON.stringify({ title: currentTitle, content: htmlContent });
+      const payload = JSON.stringify({ title: currentTitle, content: htmlContent, mood: currentMood, weather: currentWeather });
       const { ciphertext, nonce } = encryptEntry(payload, encKey);
       const today = new Date().toISOString().split('T')[0];
 
@@ -143,16 +172,18 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   useEffect(() => {
     // If we have unsaved work for a different entry, immediately trigger a background save
     if (stateRef.current.saveStatus === 'unsaved' && stateRef.current.entryId !== initialEntryId) {
-      handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.entryId);
+      handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
     }
 
     if (editor && initialContent !== editor.getHTML()) {
       editor.commands.setContent(initialContent);
     }
     setTitle(initialTitle);
+    setMood(initialMood);
+    setWeather(initialWeather);
     setEntryId(initialEntryId);
     setSaveStatus('saved');
-  }, [editor, initialTitle, initialContent, initialEntryId]);
+  }, [editor, initialTitle, initialContent, initialMood, initialWeather, initialEntryId]);
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isLinkPromptOpen, setIsLinkPromptOpen] = useState(false);
@@ -193,7 +224,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         clearTimeout(debounceTimerRef.current);
       }
       if (stateRef.current.saveStatus === 'unsaved') {
-        handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.entryId);
+        handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
       }
     };
   }, []);
@@ -234,6 +265,37 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         : "w-full max-w-4xl mx-auto flex flex-col"
     }>
       <div className={`flex flex-col space-y-4 w-full ${isFullscreen ? 'max-w-6xl mx-auto flex-1' : ''}`}>
+      
+      {/* Meta Bar: Mood & Weather */}
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2 shadow-sm flex items-center space-x-1 overflow-x-auto hide-scrollbar">
+          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-widest pl-2 pr-1">Mood</span>
+          {MOODS.map(m => (
+            <button
+              key={m}
+              onClick={() => handleMoodChange(m)}
+              className={`p-1.5 rounded-lg text-lg transition-all ${mood === m ? 'bg-amber-100 dark:bg-amber-900/40 scale-110' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 grayscale hover:grayscale-0'}`}
+              title="Set Mood"
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2 shadow-sm flex items-center space-x-1 overflow-x-auto hide-scrollbar">
+          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-widest pl-2 pr-1">Weather</span>
+          {WEATHERS.map(w => (
+            <button
+              key={w}
+              onClick={() => handleWeatherChange(w)}
+              className={`p-1.5 rounded-lg text-lg transition-all ${weather === w ? 'bg-blue-100 dark:bg-blue-900/40 scale-110' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 grayscale hover:grayscale-0'}`}
+              title="Set Weather"
+            >
+              {w}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Title Input */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg flex items-center">
         <input
@@ -343,7 +405,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
             disabled={saveStatus === 'saved' || saveStatus === 'saving'}
             onClick={() => {
               if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              handleSave(title, editor.getHTML());
+              handleSave(title, editor.getHTML(), mood, weather);
             }}
             className={`px-3 py-1.5 text-xs font-medium flex items-center transition-colors ${
               saveStatus === 'saved' ? 'text-neutral-500 dark:text-neutral-400 cursor-default' :

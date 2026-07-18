@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { trpc } from '@/lib/trpc/client';
-import { Calendar, PlusCircle, Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, Plus } from 'lucide-react';
+import { Calendar, PlusCircle, Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, Plus, PenTool } from 'lucide-react';
 import { useEncryption } from '@/lib/crypto/EncryptionContext';
 import { decryptEntry, encryptEntry } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
@@ -23,6 +23,8 @@ interface DecryptedEntry {
   createdAt: string | Date;
   title: string;
   snippet: string;
+  mood?: string;
+  weather?: string;
 }
 
 export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen, onClose }: JournalSidebarProps) {
@@ -124,18 +126,22 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
           
           let title = 'Untitled';
           let contentStr = plaintext;
+          let mood = '';
+          let weather = '';
           try {
             const p = JSON.parse(plaintext);
             if (p.title) title = p.title;
             if (p.content) contentStr = p.content;
+            if (p.mood) mood = p.mood;
+            if (p.weather) weather = p.weather;
           } catch(e) {
             // legacy format
           }
 
           const snippet = contentStr.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').substring(0, 80);
-          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title, snippet };
+          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title, snippet, mood, weather };
         } catch (err) {
-          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title: 'Corrupted Entry', snippet: '' };
+          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title: 'Corrupted Entry', snippet: '', mood: '', weather: '' };
         }
       });
       // Sort by createdAt desc
@@ -202,25 +208,29 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
         <div className="w-80 min-w-[320px] flex flex-col h-screen overflow-y-auto">
         <div className="p-4 pb-2 space-y-3">
           {/* Header */}
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Entries</h2>
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={() => onSelectEntry(null)} 
-                className="p-1.5 text-neutral-500 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors" 
-                title="New Entry"
-              >
-                <Plus size={16} />
-              </button>
-              <button 
-                onClick={onClose} 
-                className="p-1.5 text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors" 
-                title="Close Sidebar"
-              >
-                <PanelLeftClose size={16} />
-              </button>
-            </div>
+          <div className="flex items-center justify-between px-2 mb-4">
+            <button 
+              onClick={() => onSelectEntry('dashboard')} 
+              className={`text-lg font-bold tracking-tight transition-colors ${selectedEntryId === undefined ? 'text-amber-500' : 'text-neutral-800 dark:text-neutral-200 hover:text-amber-500'}`}
+            >
+              carouself
+            </button>
+            <button 
+              onClick={onClose} 
+              className="p-1.5 text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-md transition-colors md:hidden" 
+              title="Close Sidebar"
+            >
+              <PanelLeftClose size={16} />
+            </button>
           </div>
+
+          <button 
+            onClick={() => onSelectEntry(null)}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg shadow-amber-500/20 py-3 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all transform active:scale-95 mb-2"
+          >
+            <PenTool size={18} />
+            <span>Write New Entry</span>
+          </button>
           
           {/* Search Bar */}
         <div className="relative group">
@@ -323,8 +333,9 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                       : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200'
                   } ${openDropdownId === entry.id ? 'z-50' : 'z-10'}`}
                 >
-                  <span className={`font-semibold text-sm truncate pr-6 ${selectedEntryId === entry.id ? 'text-amber-400' : 'text-neutral-800 dark:text-neutral-200'}`}>
-                    {entry.title}
+                  <span className={`font-semibold text-sm truncate pr-6 flex items-center space-x-1.5 ${selectedEntryId === entry.id ? 'text-amber-400' : 'text-neutral-800 dark:text-neutral-200'}`}>
+                    {entry.mood && <span>{entry.mood}</span>}
+                    <span>{entry.title}</span>
                   </span>
                   <div className="flex items-center space-x-2 text-xs text-neutral-500 pr-2">
                     <span>{new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>

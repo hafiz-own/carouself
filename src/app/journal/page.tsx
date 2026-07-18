@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useEncryption } from '@/lib/crypto/EncryptionContext';
 import { trpc } from '@/lib/trpc/client';
 import { JournalEditor } from '@/components/JournalEditor';
+import { HomeDashboard } from '@/components/HomeDashboard';
 import { UnlockScreen } from '@/components/UnlockScreen';
 import { JournalSidebar } from '@/components/JournalSidebar';
 import { decryptEntry } from '@/lib/crypto/core';
@@ -14,9 +15,12 @@ export default function JournalPage() {
   const { encKey } = useEncryption();
   const { data, isLoading, error } = trpc.auth.me.useQuery();
   
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [viewState, setViewState] = useState<'dashboard' | 'editor'>('dashboard');
+  const [selectedEntryId, setSelectedEntryId] = useState<string | undefined>(undefined);
   const [activeContent, setActiveContent] = useState<string>('');
   const [activeTitle, setActiveTitle] = useState<string>('');
+  const [activeMood, setActiveMood] = useState<string>('');
+  const [activeWeather, setActiveWeather] = useState<string>('');
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [editorResetKey, setEditorResetKey] = useState<number>(0);
@@ -31,15 +35,29 @@ export default function JournalPage() {
   const utils = trpc.useUtils();
 
   const handleSelectEntry = async (id: string | null) => {
-    setEditorResetKey(prev => prev + 1); // Force remount to clear previous state
+    setEditorResetKey(prev => prev + 1);
 
-    setSelectedEntryId(id);
-    if (!id) {
-      // New entry
+    if (id === null) {
+      // Create new entry
+      setViewState('editor');
+      setSelectedEntryId(undefined);
       setActiveContent('');
       setActiveTitle('');
+      setActiveMood('');
+      setActiveWeather('');
+      if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
       return;
     }
+
+    if (id === 'dashboard') {
+      setViewState('dashboard');
+      setSelectedEntryId(undefined);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
+      return;
+    }
+
+    setViewState('editor');
+    setSelectedEntryId(id);
 
     if (!encKey) return;
 
@@ -55,11 +73,15 @@ export default function JournalPage() {
       
       let parsedContent = plaintext;
       let parsedTitle = '';
+      let parsedMood = '';
+      let parsedWeather = '';
       try {
         const payload = JSON.parse(plaintext);
         if (typeof payload === 'object' && payload !== null) {
           parsedContent = payload.content || '';
           parsedTitle = payload.title || '';
+          parsedMood = payload.mood || '';
+          parsedWeather = payload.weather || '';
         }
       } catch (e) {
         // Fallback to legacy plain-html entries
@@ -67,6 +89,8 @@ export default function JournalPage() {
       
       setActiveContent(parsedContent);
       setActiveTitle(parsedTitle);
+      setActiveMood(parsedMood);
+      setActiveWeather(parsedWeather);
     } catch (err) {
       console.error("Failed to decrypt entry", err);
       setActiveContent('<p class="text-red-400">Failed to decrypt entry. It may be corrupted or encrypted with a different key.</p>');
@@ -75,6 +99,17 @@ export default function JournalPage() {
     } finally {
       setIsDecrypting(false);
     }
+  };
+
+  const handleStartTemplate = (title: string, content: string) => {
+    setEditorResetKey(prev => prev + 1);
+    setViewState('editor');
+    setSelectedEntryId(undefined);
+    setActiveTitle(title);
+    setActiveContent(content);
+    setActiveMood('');
+    setActiveWeather('');
+    if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   if (isLoading) {
@@ -153,20 +188,23 @@ export default function JournalPage() {
           </div>
         </div>
         
-        <div className={`w-full transition-opacity duration-300 ${isDecrypting ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-          <JournalEditor 
-            key={`editor-${editorResetKey}`}
-            encKey={encKey} 
-            initialTitle={activeTitle}
-            initialContent={activeContent} 
-            entryId={selectedEntryId || undefined} 
-            onDelete={() => {
-              setSelectedEntryId(null);
-              setActiveTitle('');
-              setActiveContent('');
-              setEditorResetKey(prev => prev + 1);
-            }}
-          />
+        <div className={`w-full transition-opacity duration-300 ${isDecrypting ? 'opacity-50 pointer-events-none' : 'opacity-100'} flex justify-center`}>
+          {viewState === 'dashboard' ? (
+            <HomeDashboard encKey={encKey} onSelectEntry={handleSelectEntry} email={data.email} onStartTemplate={handleStartTemplate} />
+          ) : (
+            <JournalEditor 
+              key={`editor-${editorResetKey}`}
+              encKey={encKey} 
+              initialTitle={activeTitle}
+              initialContent={activeContent} 
+              initialMood={activeMood}
+              initialWeather={activeWeather}
+              entryId={selectedEntryId} 
+              onDelete={() => {
+                handleSelectEntry('dashboard');
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
