@@ -11,7 +11,7 @@ import { ConfirmDialog, PromptDialog, AlertDialog } from './ui/Dialogs';
 
 interface JournalSidebarProps {
   onSelectEntry: (id: string | null) => void;
-  selectedEntryId: string | null;
+  selectedEntryId?: string | null;
   encKey: Uint8Array | null;
   isOpen: boolean;
   onClose: () => void;

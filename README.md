@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Carouself
 
-## Getting Started
+Carouself is a zero-knowledge, end-to-end encrypted digital journaling application. It is designed to provide uncompromising security and complete data ownership, ensuring that private entries remain mathematically inaccessible to anyone but the author.
 
-First, run the development server:
+## Architecture & Security Implementation
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The core architectural principle of Carouself is strict isolation between the client interface and server infrastructure. The server infrastructure is treated as entirely untrusted and is physically incapable of decrypting user data.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Zero-Knowledge Cryptography
+All encryption and decryption processes occur strictly on the client side, within the user's browser.
+- **Key Derivation**: Upon authentication, the client utilizes Argon2id to derive two distinct cryptographic keys from the user's Master Password. The first is an authentication hash transmitted to the server. The second is an encryption key retained solely in the client's volatile memory.
+- **Data Encryption**: When an entry is composed, the text and associated metadata are serialized and encrypted using the XChaCha20-Poly1305 authenticated encryption algorithm. This operation is powered by the industry-standard Libsodium cryptography library.
+- **Ciphertext Storage**: The server receives and stores only the resulting ciphertext and cryptographic nonce. It never receives the plaintext, nor does it receive the encryption key required to read it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Application Stack
+The application is built upon a modern, type-safe stack optimized for performance and maintainability:
+- **Framework**: Next.js App Router, enabling efficient server-side rendering for non-authenticated interfaces and robust API routing.
+- **RPC Layer**: tRPC facilitates strongly-typed, end-to-end communication between the client and the server, ensuring interface contracts are strictly enforced at compile time.
+- **Database ORM**: Drizzle ORM provides a lightweight, highly performant abstraction over the SQL database, ensuring type safety at the persistence layer.
+- **Interface**: The frontend is constructed using React and styled with Tailwind CSS. The rich-text editing experience is powered by the headless TipTap framework.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Self-Hosting Guide
 
-To learn more about Next.js, take a look at the following resources:
+Carouself is entirely open-source and designed to be easily self-hosted. By self-hosting, you retain absolute physical and cryptographic control over your data environment.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
+To deploy your own instance of Carouself, you will need the following dependencies available in your environment:
+- Node.js (Version 18 or higher)
+- npm, yarn, or pnpm
+- A PostgreSQL database (or an equivalent SQL database supported by Drizzle ORM)
+- A Web3Forms Access Key (Optional, strictly for contact form functionality)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Installation Steps
 
-## Deploy on Vercel
+1. **Clone the Repository**
+   Clone the source code to your local machine or server.
+   ```bash
+   git clone https://github.com/hafiz-own/carouself.git
+   cd carouself
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Install Dependencies**
+   Install the required Node.js packages.
+   ```bash
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. **Configure Environment Variables**
+   Create your configuration file.
+   ```bash
+   cp .env.example .env
+   ```
+   Open the `.env` file and configure the following variables:
+   - `DATABASE_URL`: The connection string to your SQL database.
+   - `JWT_SECRET`: A highly secure, randomly generated string used for signing authentication tokens.
+   - `NEXT_PUBLIC_WEB3FORMS_KEY`: (Optional) Your Web3Forms access key if you wish to enable the contact form.
+
+4. **Initialize the Database**
+   Push the Drizzle schema to your database to construct the required tables.
+   ```bash
+   npm run db:push
+   ```
+
+5. **Start the Application**
+   For local usage and testing, run the development server:
+   ```bash
+   npm run dev
+   ```
+   For production deployments, build the application and start the optimized server:
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+### Production Considerations
+When deploying to a production environment, ensure that your application is served exclusively over HTTPS. Modern browsers restrict the usage of cryptographic Web APIs (such as those utilized by Libsodium) to secure contexts. Without HTTPS, the zero-knowledge encryption layer will fail to initialize securely. 
+
+Additionally, ensure your `JWT_SECRET` is generated using a secure random number generator and is stored safely within your deployment environment's secret management system.
