@@ -16,7 +16,12 @@ const mockEntries = [
 
 export default function LandingPage() {
   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const [isMounted, setIsMounted] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Auto-scroll logic for carousel
   useEffect(() => {
@@ -304,6 +309,94 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* How it Works Schematic */}
+      <section className="py-32 px-6 max-w-6xl mx-auto space-y-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center space-y-4 max-w-2xl mx-auto"
+        >
+          <h2 className="text-3xl md:text-5xl font-bold">How it Works</h2>
+          <p className="text-lg text-neutral-600 dark:text-neutral-400">Your data is locked before it ever touches the internet. Here&apos;s exactly how it flows.</p>
+        </motion.div>
+
+        <div className="relative">
+          {/* Connecting Line */}
+          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-blue-500/20 -translate-y-1/2 z-0" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-6 relative z-10">
+            
+            {/* Step 1 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl shadow-xl flex flex-col items-center text-center relative group hover:border-amber-500/50 transition-colors"
+            >
+              <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <PenTool className="text-amber-500" size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-3">1. You Write</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                You compose your thoughts in your browser. At this stage, everything is strictly local and never leaves your device.
+              </p>
+            </motion.div>
+
+            {/* Step 2 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl shadow-xl flex flex-col items-center text-center relative group hover:border-purple-500/50 transition-colors"
+            >
+              <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Lock className="text-purple-500" size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-3">2. Local Encryption</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                Before leaving your device, your text is encrypted using <span className="font-mono text-xs bg-neutral-100 dark:bg-black px-1.5 py-0.5 rounded text-purple-500 border border-purple-500/20">XChaCha20-Poly1305</span> and your Master Password.
+              </p>
+            </motion.div>
+
+            {/* Step 3 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-3xl shadow-xl flex flex-col items-center text-center relative group hover:border-blue-500/50 transition-colors"
+            >
+              <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Shield className="text-blue-500" size={32} />
+              </div>
+              <h3 className="text-xl font-bold mb-3">3. Cloud Sync</h3>
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">
+                We only ever receive and store mathematical gibberish (ciphertext). Even if our databases are breached, your journals remain completely locked.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="flex justify-center mt-12"
+        >
+          <a href="https://github.com/hafiz-own/carouself" target="_blank" rel="noopener noreferrer" className="inline-flex items-center space-x-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] dark:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_10px_50px_-5px_rgba(0,0,0,0.6)] dark:hover:shadow-[0_10px_50px_-5px_rgba(255,255,255,0.5)] border border-neutral-800 dark:border-neutral-200">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.6.113.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+            </svg>
+            <span>Verify on GitHub (100% Open Source)</span>
+          </a>
+        </motion.div>
+      </section>
+
       {/* Modern Contact Section */}
       <motion.section 
         initial={{ opacity: 0, y: 40 }}
@@ -318,57 +411,66 @@ export default function LandingPage() {
             <p className="text-neutral-600 dark:text-neutral-400">Have a question or just want to say hi? Drop us a message below.</p>
           </div>
 
-          <form onSubmit={handleContactSubmit} className="space-y-6" suppressHydrationWarning>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6" suppressHydrationWarning>
-              <div className="space-y-2" suppressHydrationWarning>
-                <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  id="name" 
+          {isMounted ? (
+            <form onSubmit={handleContactSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Name</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    id="name" 
+                    required 
+                    placeholder="John Doe"
+                    className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    id="email" 
+                    required 
+                    placeholder="john@example.com"
+                    className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="message" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Message</label>
+                <textarea 
+                  name="message" 
+                  id="message" 
                   required 
-                  suppressHydrationWarning
-                  placeholder="John Doe"
-                  className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+                  rows={4}
+                  placeholder="How can we help you?"
+                  className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all resize-none custom-scrollbar placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
                 />
               </div>
-              <div className="space-y-2" suppressHydrationWarning>
-                <label htmlFor="email" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Email</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  id="email" 
-                  required 
-                  suppressHydrationWarning
-                  placeholder="john@example.com"
-                  className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
-                />
+
+              <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
+
+              <button 
+                type="submit" 
+                disabled={formStatus === 'submitting' || formStatus === 'success'}
+                className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 border border-transparent hover:border-amber-500/50"
+              >
+                {formStatus === 'submitting' && <span className="animate-pulse">Sending...</span>}
+                {formStatus === 'success' && <><CheckCircle2 size={18} /> Sent Successfully</>}
+                {formStatus === 'idle' && 'Send Message'}
+              </button>
+            </form>
+          ) : (
+            <div className="animate-pulse space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-12 bg-neutral-200 dark:bg-neutral-800 rounded-xl w-full"></div>
+                <div className="h-12 bg-neutral-200 dark:bg-neutral-800 rounded-xl w-full"></div>
               </div>
+              <div className="h-32 bg-neutral-200 dark:bg-neutral-800 rounded-xl w-full"></div>
+              <div className="h-14 bg-neutral-200 dark:bg-neutral-800 rounded-xl w-full"></div>
             </div>
-            <div className="space-y-2" suppressHydrationWarning>
-              <label htmlFor="message" className="text-sm font-semibold text-neutral-900 dark:text-white ml-1">Message</label>
-              <textarea 
-                name="message" 
-                id="message" 
-                required 
-                rows={4}
-                placeholder="How can we help you?"
-                className="w-full bg-neutral-50 dark:bg-black border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 outline-none transition-all resize-none custom-scrollbar placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
-              />
-            </div>
-
-            <input type="checkbox" name="botcheck" className="hidden" style={{ display: 'none' }} />
-
-            <button 
-              type="submit" 
-              disabled={formStatus === 'submitting' || formStatus === 'success'}
-              className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 border border-transparent hover:border-amber-500/50"
-            >
-              {formStatus === 'submitting' && <span className="animate-pulse">Sending...</span>}
-              {formStatus === 'success' && <><CheckCircle2 size={18} /> Sent Successfully</>}
-              {formStatus === 'idle' && 'Send Message'}
-            </button>
-          </form>
+          )}
         </div>
         
         {/* Footer */}
