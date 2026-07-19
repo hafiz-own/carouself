@@ -296,8 +296,8 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         </div>
       </div>
 
-      {/* Title Input */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg flex items-center">
+      {/* Title Input & Save Status */}
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg flex items-center justify-between space-x-4">
         <input
           type="text"
           value={title}
@@ -305,20 +305,43 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
           placeholder="Entry Title..."
           className="w-full bg-transparent text-2xl font-bold text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
         />
+        
+        {/* Status Indicator */}
+        <button 
+          onClick={() => {
+            if (saveStatus !== 'saved' && saveStatus !== 'saving') {
+              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+              handleSave(title, editor.getHTML(), mood, weather);
+            }
+          }}
+          disabled={saveStatus === 'saved' || saveStatus === 'saving'}
+          className={`flex-shrink-0 flex items-center space-x-2 whitespace-nowrap px-3 py-1.5 rounded-lg transition-colors ${
+            saveStatus !== 'saved' && saveStatus !== 'saving' ? 'hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer active:scale-95' : 'cursor-default'
+          }`}
+          title={saveStatus === 'unsaved' || saveStatus === 'error' ? 'Click to save now' : ''}
+        >
+          <div className={`w-2 h-2 rounded-full ${
+            saveStatus === 'saved' ? 'bg-green-500' :
+            saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' :
+            saveStatus === 'error' ? 'bg-red-500' :
+            'bg-amber-500'
+          }`} />
+          <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            {saveStatus === 'saved' && 'Saved'}
+            {saveStatus === 'saving' && 'Saving'}
+            {saveStatus === 'unsaved' && 'Unsaved'}
+            {saveStatus === 'error' && 'Retry Save'}
+          </span>
+        </button>
       </div>
-      {/* Toolbar & Status Bar */}
-      <div className="sticky top-4 z-10 flex items-center justify-between bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 p-2 rounded-xl shadow-lg overflow-x-auto custom-scrollbar whitespace-nowrap">
-        <div className="flex items-center space-x-1 min-w-max pr-4">
+      {/* Toolbar */}
+      <div className="sticky top-4 z-10 flex items-center justify-between bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 p-2 rounded-xl shadow-lg">
+        <div className="flex items-center space-x-1 overflow-x-auto custom-scrollbar whitespace-nowrap min-w-0 pr-2">
           <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
           </ToolbarButton>
           <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
-          </ToolbarButton>
-
-          <div className="w-px h-6 bg-neutral-100 dark:bg-neutral-800 mx-1" />
-          <ToolbarButton onClick={() => setIsFullscreen(!isFullscreen)}>
-            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
           </ToolbarButton>
 
           <div className="w-px h-6 bg-neutral-100 dark:bg-neutral-800 mx-1" />
@@ -400,25 +423,11 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
           )}
         </div>
 
-        <div className="px-4 flex items-center space-x-2 whitespace-nowrap ml-4">
-          <button 
-            disabled={saveStatus === 'saved' || saveStatus === 'saving'}
-            onClick={() => {
-              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              handleSave(title, editor.getHTML(), mood, weather);
-            }}
-            className={`px-3 py-1.5 text-xs font-medium flex items-center transition-colors ${
-              saveStatus === 'saved' ? 'text-neutral-500 dark:text-neutral-400 cursor-default' :
-              saveStatus === 'saving' ? 'text-amber-500 dark:text-amber-400 cursor-default' :
-              saveStatus === 'error' ? 'text-red-500 dark:text-red-400 cursor-pointer underline' :
-              'text-neutral-700 dark:text-neutral-300 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer underline decoration-dotted underline-offset-4'
-            }`}
-          >
-            {saveStatus === 'saved' && <>Draft saved</>}
-            {saveStatus === 'saving' && <>Saving...</>}
-            {saveStatus === 'unsaved' && <>Unsaved changes</>}
-            {saveStatus === 'error' && <>Save failed - retry</>}
-          </button>
+        {/* Fixed Right side */}
+        <div className="flex-shrink-0 flex items-center space-x-1 pl-2 ml-2 border-l border-neutral-200 dark:border-neutral-800">
+          <ToolbarButton onClick={() => setIsFullscreen(!isFullscreen)}>
+            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+          </ToolbarButton>
         </div>
       </div>
 

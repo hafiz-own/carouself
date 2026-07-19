@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { trpc } from '@/lib/trpc/client';
-import { Calendar, PlusCircle, Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, Plus, PenTool } from 'lucide-react';
+import { Calendar, PlusCircle, Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, Plus, PenTool, Sun, Moon } from 'lucide-react';
 import { useEncryption } from '@/lib/crypto/EncryptionContext';
 import { decryptEntry, encryptEntry } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
@@ -34,6 +34,23 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [decryptedEntries, setDecryptedEntries] = useState<DecryptedEntry[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.theme = 'light';
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.theme = 'dark';
+      setIsDark(true);
+    }
+  };
 
   const [entryToRename, setEntryToRename] = useState<DecryptedEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
@@ -381,13 +398,20 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
       </div>
 
       {/* Settings Button (Bottom Pinned) */}
-      <div className="p-3 mt-auto border-t border-neutral-200 dark:border-neutral-800 shrink-0">
+      <div className="p-3 mt-auto border-t border-neutral-200 dark:border-neutral-800 shrink-0 flex items-center justify-between">
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+          className="flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
         >
           <Settings size={18} />
           <span className="font-medium text-sm">Settings</span>
+        </button>
+        <button
+          onClick={toggleTheme}
+          title="Toggle Theme"
+          className="p-2 ml-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
       </div>
