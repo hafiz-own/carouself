@@ -8,6 +8,8 @@ export const users = pgTable('users', {
   encryptedDek: varchar('encrypted_dek', { length: 255 }).notNull(),
   dekNonce: varchar('dek_nonce', { length: 255 }).notNull(),
   recoveryKeyHash: varchar('recovery_key_hash', { length: 255 }).notNull(),
+  recoveryEncryptedDek: varchar('recovery_encrypted_dek', { length: 255 }), // Nullable for backwards compatibility during dev
+  recoveryDekNonce: varchar('recovery_dek_nonce', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   totalWords: integer('total_words').default(0).notNull(),
 });
@@ -23,6 +25,8 @@ export const entries = pgTable('entries', {
   userId: uuid('user_id').references(() => users.id).notNull(),
   ciphertext: text('ciphertext').notNull(),
   nonce: varchar('nonce', { length: 255 }).notNull(),
+  metadataCiphertext: text('metadata_ciphertext'), // Nullable for legacy entries
+  metadataNonce: varchar('metadata_nonce', { length: 255 }), // Nullable for legacy entries
   date: date('date').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

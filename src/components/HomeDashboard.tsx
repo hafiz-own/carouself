@@ -22,6 +22,7 @@ interface DecryptedFullEntry {
   wordCount: number;
   mood?: string;
   weather?: string;
+  location?: string;
 }
 
 export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }: HomeDashboardProps) {
@@ -48,18 +49,21 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
           let content = plaintext;
           let mood = '';
           let weather = '';
+          let location = '';
           try {
             const p = JSON.parse(plaintext);
             if (p.title) title = p.title;
             if (p.content) content = p.content;
+            if (p.snippet) content = p.snippet; // If metadata payload, use snippet as content
             if (p.mood) mood = p.mood;
             if (p.weather) weather = p.weather;
+            if (p.location) location = p.location;
           } catch(e) {}
 
           const textOnly = content.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
           const wordCount = textOnly === '' ? 0 : textOnly.split(/\s+/).length;
 
-          return { id: entry.id, date: entry.date, title, content: textOnly, wordCount, mood, weather };
+          return { id: entry.id, date: entry.date, title, content: textOnly, wordCount, mood, weather, location };
         } catch (e) {
           return { id: entry.id, date: entry.date, title: 'Corrupted', content: '', wordCount: 0, mood: '', weather: '' };
         }
@@ -171,8 +175,12 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
                 <div className="flex items-center space-x-3 mb-4 md:mb-6">
                   <div className="px-2 py-1 bg-black/[0.03] dark:bg-white/5 border border-black/[0.04] dark:border-white/5 text-neutral-500 dark:text-neutral-400 rounded text-[10px] font-mono tracking-widest uppercase flex items-center space-x-2">
                     <span>Memory</span>
-                    {(carouselItems[carouselIndex].mood || carouselItems[carouselIndex].weather) && (
-                      <span className="text-sm leading-none -mt-px">{carouselItems[carouselIndex].mood} {carouselItems[carouselIndex].weather}</span>
+                    {(carouselItems[carouselIndex].mood || carouselItems[carouselIndex].weather || carouselItems[carouselIndex].location) && (
+                      <span className="text-sm leading-none -mt-px flex items-center space-x-1.5">
+                        {carouselItems[carouselIndex].mood && <span>{carouselItems[carouselIndex].mood}</span>}
+                        {carouselItems[carouselIndex].weather && <span>{carouselItems[carouselIndex].weather}</span>}
+                        {carouselItems[carouselIndex].location && <span className="text-amber-600 dark:text-amber-500 font-semibold truncate max-w-[120px] ml-1 flex items-center">📍 {carouselItems[carouselIndex].location}</span>}
+                      </span>
                     )}
                   </div>
                   <span className="text-[11px] font-mono tracking-widest uppercase text-neutral-400 dark:text-neutral-500">

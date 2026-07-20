@@ -24,6 +24,7 @@ interface DecryptedEntry {
   snippet: string;
   mood?: string;
   weather?: string;
+  location?: string;
 }
 
 export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen, onClose }: JournalSidebarProps) {
@@ -155,20 +156,23 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
           let contentStr = plaintext;
           let mood = '';
           let weather = '';
+          let location = '';
           try {
             const p = JSON.parse(plaintext);
             if (p.title) title = p.title;
             if (p.content) contentStr = p.content;
+            if (p.snippet) contentStr = p.snippet; // If metadata payload, use snippet
             if (p.mood) mood = p.mood;
             if (p.weather) weather = p.weather;
+            if (p.location) location = p.location;
           } catch(e) {
             // legacy format
           }
 
           const snippet = contentStr.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').substring(0, 80);
-          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title, snippet, mood, weather };
+          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title, snippet, mood, weather, location };
         } catch (err) {
-          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title: 'Corrupted Entry', snippet: '', mood: '', weather: '' };
+          return { id: entry.id, date: entry.date, createdAt: entry.createdAt, title: 'Corrupted Entry', snippet: '', mood: '', weather: '', location: '' };
         }
       });
       // Sort by createdAt desc
@@ -306,9 +310,15 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                     : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200'
                 } ${openDropdownId === result.id ? 'z-50' : 'z-10'}`}
               >
-                <span className={`text-sm font-semibold truncate pr-6 ${selectedEntryId === result.id ? 'text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
-                  {result.title}
+                <span className={`text-sm font-semibold truncate pr-6 flex items-center space-x-1.5 ${selectedEntryId === result.id ? 'text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
+                  {result.mood && <span>{result.mood}</span>}
+                  <span>{result.title}</span>
                 </span>
+                {result.location && (
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-amber-600 dark:text-amber-500 truncate">
+                    📍 {result.location}
+                  </span>
+                )}
                 <span className="text-[11px] font-mono tracking-wide text-neutral-500 line-clamp-2 leading-relaxed pr-2">
                   {result.snippet}
                 </span>
@@ -374,10 +384,14 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                     {entry.mood && <span>{entry.mood}</span>}
                     <span>{entry.title}</span>
                   </span>
-                  <div className="flex items-center space-x-2 text-[10px] font-mono tracking-widest uppercase text-neutral-500 pr-2">
+                  <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono tracking-widest uppercase text-neutral-500 pr-2 mt-0.5">
                     <span>{new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    <span>&bull;</span>
-                    <span>{new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
+                    {entry.location && (
+                      <>
+                        <span className="opacity-50">&bull;</span>
+                        <span className="flex items-center text-amber-600 dark:text-amber-500 truncate max-w-[100px]">📍 {entry.location}</span>
+                      </>
+                    )}
                   </div>
 
                   <button 

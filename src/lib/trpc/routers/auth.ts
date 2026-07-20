@@ -61,7 +61,9 @@ export const authRouter = router({
       salt: z.string(),
       encryptedDek: z.string(),
       dekNonce: z.string(),
-      recoveryKeyHash: z.string()
+      recoveryKeyHash: z.string(),
+      recoveryEncryptedDek: z.string().optional(),
+      recoveryDekNonce: z.string().optional()
     }))
     .mutation(async ({ input }) => {
       const existingUser = await db.select().from(users).where(eq(users.email, input.email));
@@ -80,7 +82,9 @@ export const authRouter = router({
         salt: input.salt,
         encryptedDek: input.encryptedDek,
         dekNonce: input.dekNonce,
-        recoveryKeyHash: input.recoveryKeyHash
+        recoveryKeyHash: input.recoveryKeyHash,
+        recoveryEncryptedDek: input.recoveryEncryptedDek,
+        recoveryDekNonce: input.recoveryDekNonce
       }).returning();
 
       const token = await signToken({ userId: newUser.id });
@@ -104,14 +108,18 @@ export const authRouter = router({
       const existingUser = await db.select({ 
         salt: users.salt, 
         encryptedDek: users.encryptedDek, 
-        dekNonce: users.dekNonce 
+        dekNonce: users.dekNonce,
+        recoveryEncryptedDek: users.recoveryEncryptedDek,
+        recoveryDekNonce: users.recoveryDekNonce
       }).from(users).where(eq(users.email, input.email));
       
       if (existingUser.length > 0) {
         return { 
           salt: existingUser[0].salt,
           encryptedDek: existingUser[0].encryptedDek,
-          dekNonce: existingUser[0].dekNonce
+          dekNonce: existingUser[0].dekNonce,
+          recoveryEncryptedDek: existingUser[0].recoveryEncryptedDek,
+          recoveryDekNonce: existingUser[0].recoveryDekNonce
         };
       }
       
@@ -134,11 +142,22 @@ export const authRouter = router({
         .update(input.email + 'nonce')
         .digest('hex')
         .substring(0, 48);
+      const fakeRecoveryEncryptedDek = createHmac('sha256', process.env.JWT_SECRET)
+        .update(input.email + 'recdek')
+        .digest('hex')
+        .substring(0, 80);
+
+      const fakeRecoveryDekNonce = createHmac('sha256', process.env.JWT_SECRET)
+        .update(input.email + 'recnonce')
+        .digest('hex')
+        .substring(0, 48);
         
       return { 
         salt: fakeSalt,
         encryptedDek: fakeEncryptedDek,
-        dekNonce: fakeNonce
+        dekNonce: fakeNonce,
+        recoveryEncryptedDek: fakeRecoveryEncryptedDek,
+        recoveryDekNonce: fakeRecoveryDekNonce
       };
     }),
 
@@ -197,11 +216,70 @@ export const authRouter = router({
       return { email: existingUser[0].email };
     }),
 
-  logout: publicProcedure
+  logout: protectedProcedure
     .mutation(async () => {
       const cookieStore = await cookies();
       cookieStore.delete('session');
       return { success: true };
+    }),
+
+  recoverAccount: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      recoveryKeyHash: z.string(),
+      
+      // New credentials
+      salt: z.string(),
+      authKey: z.string(),
+      encryptedDek: z.string(),
+      dekNonce: z.string(),
+      
+      // New recovery key
+      newRecoveryKeyHash: z.string(),
+      recoveryEncryptedDek: z.string(),
+      recoveryDekNonce: z.string()
+    }))
+    .mutation(async ({ input }) => {
+      const existingUser = await db.select().from(users).where(eq(users.email, input.email));
+      if (existingUser.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Account not found' });
+      }
+
+      const user = existingUser[0];
+
+      // Verify the recovery key hash
+      if (user.recoveryKeyHash !== input.recoveryKeyHash) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid recovery key' });
+      }
+
+      // Hash the new auth key for storage
+      const authKeyHash = createHash('sha256').update(input.authKey).digest('hex');
+
+      // Update the user record
+      await db.update(users)
+        .set({
+          authKeyHash,
+          salt: input.salt,
+          encryptedDek: input.encryptedDek,
+          dekNonce: input.dekNonce,
+          recoveryKeyHash: input.newRecoveryKeyHash,
+          recoveryEncryptedDek: input.recoveryEncryptedDek,
+          recoveryDekNonce: input.recoveryDekNonce
+        })
+        .where(eq(users.id, user.id));
+
+      // Generate a new session token
+      const token = await signToken({ userId: user.id });
+      const cookieStore = await cookies();
+      cookieStore.set('session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: '/'
+      });
+
+      return { success: true, userId: user.id };
     }),
 
   deleteAccount: protectedProcedure

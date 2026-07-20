@@ -28,6 +28,7 @@ interface JournalEditorProps {
   initialContent?: string; 
   initialMood?: string;
   initialWeather?: string;
+  initialLocation?: string;
   entryId?: string;
   onDelete?: () => void;
   onSaveSuccess?: (id: string) => void;
@@ -71,12 +72,13 @@ const extensions = [
   }),
 ];
 
-export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete, onSaveSuccess }: JournalEditorProps) {
+export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', initialLocation = 'Home', entryId: initialEntryId, onDelete, onSaveSuccess }: JournalEditorProps) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'unsaved'>('saved');
   const [entryId, setEntryId] = useState<string | undefined>(initialEntryId);
   const [title, setTitle] = useState(initialTitle);
   const [mood, setMood] = useState(initialMood);
   const [weather, setWeather] = useState(initialWeather);
+  const [location, setLocation] = useState(initialLocation);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editorFont, setEditorFont] = useState('editor-font-sans');
@@ -105,6 +107,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     content: initialContent, 
     mood,
     weather,
+    location,
     entryId, 
     saveStatus: 'saved' as 'saved' | 'saving' | 'error' | 'unsaved' 
   });
@@ -127,7 +130,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
 
       // Autosave after 2000ms of inactivity
       debounceTimerRef.current = setTimeout(() => {
-        handleSave(title, editor.getHTML(), mood, weather);
+        handleSave(title, editor.getHTML(), mood, weather, location);
       }, 2000);
     },
   });
@@ -139,7 +142,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       clearTimeout(debounceTimerRef.current);
     }
     debounceTimerRef.current = setTimeout(() => {
-      handleSave(e.target.value, editor?.getHTML() || '', mood, weather);
+      handleSave(e.target.value, editor?.getHTML() || '', mood, weather, location);
     }, 2000);
   };
 
@@ -149,7 +152,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     setSaveStatus('unsaved');
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      handleSave(title, editor?.getHTML() || '', val, weather);
+      handleSave(title, editor?.getHTML() || '', val, weather, location);
     }, 2000);
   };
 
@@ -159,14 +162,26 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     setSaveStatus('unsaved');
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      handleSave(title, editor?.getHTML() || '', mood, val);
+      handleSave(title, editor?.getHTML() || '', mood, val, location);
+    }, 2000);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Limit to 30 characters
+    if (val.length > 30) return;
+    setLocation(val);
+    setSaveStatus('unsaved');
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      handleSave(title, editor?.getHTML() || '', mood, weather, val);
     }, 2000);
   };
 
   // Keep stateRef in sync with the latest state
   useEffect(() => {
-    stateRef.current = { title, content: editor?.getHTML() || '', mood, weather, entryId, saveStatus };
-  }, [title, editor, mood, weather, entryId, saveStatus]);
+    stateRef.current = { title, content: editor?.getHTML() || '', mood, weather, location, entryId, saveStatus };
+  }, [title, editor, mood, weather, location, entryId, saveStatus]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -178,7 +193,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  const handleSave = async (currentTitle: string, htmlContent: string, currentMood: string, currentWeather: string, targetEntryId?: string) => {
+  const handleSave = async (currentTitle: string, htmlContent: string, currentMood: string, currentWeather: string, currentLocation: string, targetEntryId?: string) => {
     const isBackgroundSave = targetEntryId !== undefined;
     const saveId = isBackgroundSave ? targetEntryId : entryId;
     
@@ -189,14 +204,21 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     
     if (!isBackgroundSave) setSaveStatus('saving');
     try {
-      const payload = JSON.stringify({ title: currentTitle, content: htmlContent, mood: currentMood, weather: currentWeather });
+      const payload = JSON.stringify({ title: currentTitle, content: htmlContent, mood: currentMood, weather: currentWeather, location: currentLocation });
       const { ciphertext, nonce } = encryptEntry(payload, encKey);
+      
+      const snippet = plainText.substring(0, 80);
+      const metadataPayload = JSON.stringify({ title: currentTitle, snippet, mood: currentMood, weather: currentWeather, location: currentLocation });
+      const { ciphertext: metadataCiphertext, nonce: metadataNonce } = encryptEntry(metadataPayload, encKey);
+      
       const today = new Date().toISOString().split('T')[0];
 
       const result = await saveMutation.mutateAsync({
         id: saveId,
         ciphertext: sodium.to_hex(ciphertext),
         nonce: sodium.to_hex(nonce),
+        metadataCiphertext: sodium.to_hex(metadataCiphertext),
+        metadataNonce: sodium.to_hex(metadataNonce),
         date: today,
         wordCountDiff
       });
@@ -266,7 +288,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         clearTimeout(debounceTimerRef.current);
       }
       if (stateRef.current.saveStatus === 'unsaved') {
-        handleSaveRef.current(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
+        handleSaveRef.current(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.location, stateRef.current.entryId);
       }
     };
   }, []);
@@ -325,6 +347,17 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
             </button>
           ))}
         </div>
+        <div className="bg-white dark:bg-white/[0.02] border border-black/5 dark:border-white/5 rounded-full p-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)] dark:shadow-none flex items-center space-x-1 overflow-x-auto hide-scrollbar shrink-0">
+          <span className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest pl-3 pr-2">Location</span>
+          <input
+            type="text"
+            value={location}
+            onChange={handleLocationChange}
+            placeholder="e.g. Home"
+            className="bg-transparent border-none outline-none text-sm text-neutral-600 dark:text-neutral-300 w-24 px-2 placeholder:text-neutral-300 dark:placeholder:text-neutral-600"
+            maxLength={30}
+          />
+        </div>
       </div>
 
       {/* Title Input & Save Status */}
@@ -342,7 +375,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
           onClick={() => {
             if (saveStatus !== 'saved' && saveStatus !== 'saving') {
               if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              handleSave(title, editor.getHTML(), mood, weather);
+              handleSave(title, editor.getHTML(), mood, weather, location);
             }
           }}
           disabled={saveStatus === 'saved' || saveStatus === 'saving'}

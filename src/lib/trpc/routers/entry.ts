@@ -11,6 +11,8 @@ export const entryRouter = router({
       id: z.string().uuid().optional(),
       ciphertext: z.string(),
       nonce: z.string(),
+      metadataCiphertext: z.string().optional(),
+      metadataNonce: z.string().optional(),
       date: z.string(), // Format YYYY-MM-DD
       wordCountDiff: z.number().optional()
     }))
@@ -38,6 +40,8 @@ export const entryRouter = router({
           .set({
             ciphertext: input.ciphertext,
             nonce: input.nonce,
+            metadataCiphertext: input.metadataCiphertext,
+            metadataNonce: input.metadataNonce,
             date: input.date,
             updatedAt: new Date()
           })
@@ -52,6 +56,8 @@ export const entryRouter = router({
             userId,
             ciphertext: input.ciphertext,
             nonce: input.nonce,
+            metadataCiphertext: input.metadataCiphertext,
+            metadataNonce: input.metadataNonce,
             date: input.date
           })
           .returning();
@@ -110,7 +116,17 @@ export const entryRouter = router({
       const userId = ctx.user.id;
       const limit = input.limit ?? 50;
 
-      const items = await db.select().from(entries)
+      const items = await db.select({
+        id: entries.id,
+        userId: entries.userId,
+        date: entries.date,
+        createdAt: entries.createdAt,
+        updatedAt: entries.updatedAt,
+        // Instead of fetching full ciphertext, only fetch metadata if available, 
+        // falling back to ciphertext for legacy entries.
+        ciphertext: sql<string>`COALESCE(${entries.metadataCiphertext}, ${entries.ciphertext})`.as('ciphertext'),
+        nonce: sql<string>`COALESCE(${entries.metadataNonce}, ${entries.nonce})`.as('nonce')
+      }).from(entries)
         .where(
           input.cursor 
             ? and(eq(entries.userId, userId), lt(entries.createdAt, input.cursor)) 

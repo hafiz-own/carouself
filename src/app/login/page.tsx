@@ -99,7 +99,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-8 space-y-6">
+        <form suppressHydrationWarning onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-8 space-y-6">
           {errors.general && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
               {errors.general}
@@ -107,7 +107,7 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <label htmlFor="email" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
               <input
                 id="email"
@@ -120,7 +120,7 @@ export default function LoginPage() {
               {errors.email && <p className="text-red-400 text-xs ml-1">{errors.email}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <label htmlFor="password" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
               <input
                 id="password"
@@ -147,9 +147,14 @@ export default function LoginPage() {
           </button>
         </form>
         
-        <p className="text-center text-xs text-neutral-500">
-          Your entries are decrypted entirely on your device.
-        </p>
+        <div className="text-center space-y-4">
+          <p className="text-xs text-neutral-500">
+            Your entries are decrypted entirely on your device.
+          </p>
+          <p className="text-xs text-neutral-500">
+            Forgot your password? <a href="/recover" className="text-amber-500 hover:text-amber-400 font-medium underline underline-offset-2">Recover your account</a>
+          </p>
+        </div>
       </div>
     </div>
   );

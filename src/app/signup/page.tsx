@@ -23,7 +23,8 @@ export default function SignupPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; general?: string }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Recovery key UI state
@@ -40,6 +41,11 @@ export default function SignupPage() {
         if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
       });
       setErrors(fieldErrors);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrors({ confirmPassword: 'Passwords do not match' });
       return;
     }
 
@@ -77,6 +83,10 @@ export default function SignupPage() {
       const recoveryKeyHashBytes = sodium.crypto_hash_sha256(recoveryKeyBytes);
       const recoveryKeyHashHex = sodium.to_hex(recoveryKeyHashBytes);
 
+      // Encrypt DEK with Recovery Key
+      // We use the Recovery Key itself as the KEK for this copy of the DEK
+      const { ciphertext: recoveryEncryptedDekBytes, nonce: recoveryDekNonceBytes } = encryptDEK(dekBytes, recoveryKeyBytes);
+
       // 4. Send to server
       await signupMutation.mutateAsync({
         email,
@@ -84,7 +94,9 @@ export default function SignupPage() {
         salt: sodium.to_hex(saltBytes),
         encryptedDek: sodium.to_hex(encryptedDekBytes),
         dekNonce: sodium.to_hex(dekNonceBytes),
-        recoveryKeyHash: recoveryKeyHashHex
+        recoveryKeyHash: recoveryKeyHashHex,
+        recoveryEncryptedDek: sodium.to_hex(recoveryEncryptedDekBytes),
+        recoveryDekNonce: sodium.to_hex(recoveryDekNonceBytes)
       });
 
       // Show recovery key
@@ -145,7 +157,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-8 space-y-6">
+        <form suppressHydrationWarning onSubmit={handleSubmit} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl p-8 space-y-6">
           {errors.general && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
               {errors.general}
@@ -153,7 +165,7 @@ export default function SignupPage() {
           )}
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <label htmlFor="email" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
               <input
                 id="email"
@@ -166,7 +178,7 @@ export default function SignupPage() {
               {errors.email && <p className="text-red-400 text-xs ml-1">{errors.email}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative" suppressHydrationWarning>
               <label htmlFor="password" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
               <input
                 id="password"
@@ -177,6 +189,23 @@ export default function SignupPage() {
                 className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-600 outline-none transition-all"
               />
               {errors.password && <p className="text-red-400 text-xs ml-1">{errors.password}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Confirm Master Password</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Type your password again"
+                className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-3 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-600 outline-none transition-all"
+              />
+              {errors.confirmPassword && <p className="text-red-400 text-xs ml-1">{errors.confirmPassword}</p>}
+            </div>
+            
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 rounded-lg text-amber-800 dark:text-amber-400 text-xs text-center leading-relaxed font-medium">
+              CRITICAL: Do not forget this password. If lost, your journal entries will be mathematically impossible to recover.
             </div>
           </div>
 
