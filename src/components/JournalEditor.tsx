@@ -36,10 +36,11 @@ interface JournalEditorProps {
 const MOODS = ['😌', '😊', '😂', '😎', '🤔', '😔', '😭', '😡', '😴', '🤯'];
 const WEATHERS = ['☀️', '🌤️', '☁️', '🌧️', '⛈️', '🌨️', '💨', '🌫️'];
 
-const ToolbarButton = ({ onClick, isActive, disabled, children }: { onClick: () => void, isActive?: boolean, disabled?: boolean, children: React.ReactNode }) => (
+const ToolbarButton = ({ onClick, isActive, disabled, title, children }: { onClick: () => void, isActive?: boolean, disabled?: boolean, title?: string, children: React.ReactNode }) => (
   <button
     onClick={onClick}
     disabled={disabled}
+    title={title}
     className={`p-2 rounded-full transition-colors ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${isActive ? 'bg-black/10 dark:bg-white/10 text-neutral-900 dark:text-white' : 'text-neutral-500 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
     type="button"
   >
