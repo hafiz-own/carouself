@@ -35,8 +35,8 @@ export default function SignupPage() {
     
     const parsed = signupSchema.safeParse({ email, password });
     if (!parsed.success) {
-      const fieldErrors: any = {};
-      parsed.error.issues.forEach((err: any) => {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((err: z.ZodIssue) => {
         if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
       });
       setErrors(fieldErrors);
@@ -51,6 +51,10 @@ export default function SignupPage() {
 
       // 2. Client-side cryptography
       const saltBytes = generateSalt();
+
+      // Yield to the event loop so the browser can paint the loading state
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const masterKey = await deriveMasterKey(password, saltBytes);
       const authKeyBytes = deriveAuthKey(masterKey);
       
@@ -87,10 +91,10 @@ export default function SignupPage() {
       setRecoveryKey(rawRecoveryKey);
       toast.success("Account created securely!");
 
-    } catch (err: any) {
-      const msg = err.message || "Failed to create account. Email may be taken.";
-      setErrors({ general: msg });
-      toast.error(msg);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create account. Email may be taken.';
+      setErrors({ general: message });
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -150,8 +154,9 @@ export default function SignupPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
+              <label htmlFor="email" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -162,8 +167,9 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

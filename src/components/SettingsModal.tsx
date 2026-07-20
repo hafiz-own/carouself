@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Download, Trash2, Moon, Sun, Monitor, AlertTriangle } from 'lucide-react';
+import { X, Download, Trash2, Moon, Sun, Monitor } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { decryptEntry, generateSalt, deriveMasterKey, deriveAuthKey, deriveEncKey, encryptDEK, decryptDEK } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
 import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -20,7 +19,6 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
-  const router = useRouter();
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -41,6 +39,7 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
   useEffect(() => {
     const localTheme = window.localStorage.getItem('theme') as 'dark' | 'light' | null;
     if (localTheme) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(localTheme);
     }
   }, []);
@@ -194,7 +193,10 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
       // Encrypt the current DEK (encKey) with the NEW KEK
       const { ciphertext: newEncryptedDekBytes, nonce: newDekNonceBytes } = encryptDEK(encKey, newKek);
 
+      const oldAuthKeyBytes = deriveAuthKey(oldMasterKey);
+
       await changePasswordMutation.mutateAsync({
+        oldAuthKey: sodium.to_hex(oldAuthKeyBytes),
         newAuthKey: sodium.to_hex(newAuthKeyBytes),
         newSalt: sodium.to_hex(newSaltBytes),
         newEncryptedDek: sodium.to_hex(newEncryptedDekBytes),
@@ -205,8 +207,8 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
-      setPasswordError(error.message || "Failed to change password");
+    } catch (error: unknown) {
+      setPasswordError(error instanceof Error ? error.message : "Failed to change password");
     } finally {
       setIsChangingPassword(false);
     }
@@ -315,7 +317,7 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
             >
               <div>
                 <div className="font-medium text-neutral-800 dark:text-neutral-200 group-hover:text-amber-400 transition-colors">Export Journal Data</div>
-                <div className="text-xs text-neutral-500 mt-1">Decrypt and download all entries as JSON.</div>
+                <div className="text-xs text-neutral-500 mt-1">Decrypt and download all entries as a ZIP of .txt files.</div>
               </div>
               <Download size={20} className="text-neutral-500 group-hover:text-amber-400 transition-colors" />
             </button>

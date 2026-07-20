@@ -32,6 +32,6 @@ export async function signToken(payload: SessionPayload): Promise<string> {
  */
 export async function verifyToken(token: string): Promise<SessionPayload> {
   const secret = getSecret();
-  const { payload } = await jwtVerify(token, secret);
+  const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
   return payload as unknown as SessionPayload;
 }

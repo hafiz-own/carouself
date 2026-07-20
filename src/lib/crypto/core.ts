@@ -23,9 +23,26 @@ export function generateSalt(): Uint8Array {
  * @returns Uint8Array 32-byte master key
  */
 export async function deriveMasterKey(password: string, salt: Uint8Array): Promise<Uint8Array> {
-  // Using sodium.crypto_pwhash directly. 
-  // Note: in a pure browser context, we would use crypto_pwhash_async if available,
-  // or wrap it in a WebWorker. For our isolation and tests, this synchronous wrapper works.
+  if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(new URL('./worker.ts', import.meta.url));
+      worker.onmessage = (e) => {
+        if (e.data.success) {
+          resolve(e.data.key);
+        } else {
+          reject(new Error(e.data.error));
+        }
+        worker.terminate();
+      };
+      worker.onerror = (e) => {
+        reject(e);
+        worker.terminate();
+      };
+      worker.postMessage({ password, salt });
+    });
+  }
+
+  // Fallback for Node.js (tests)
   return sodium.crypto_pwhash(
     32, // master key length (32 bytes)
     password,
@@ -136,7 +153,7 @@ export function decryptEntry(ciphertext: Uint8Array, nonce: Uint8Array, encKey: 
     );
     
     return sodium.to_string(plaintextBytes);
-  } catch (error) {
+  } catch (_error) {
     // Explicitly throw a meaningful error on failure to satisfy AC
     throw new Error('Decryption failed: Incorrect key or corrupted data.');
   }
@@ -158,7 +175,7 @@ export function decryptDEK(ciphertext: Uint8Array, nonce: Uint8Array, kek: Uint8
       nonce,
       kek
     );
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Failed to decrypt DEK: Incorrect master password.');
   }
 }

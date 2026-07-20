@@ -47,8 +47,8 @@ export function UnlockScreen({ email }: UnlockScreenProps) {
 
       setEncKey(dekBytes);
 
-    } catch (err: any) {
-      setError(err.message || "Failed to unlock journal");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to unlock journal");
     } finally {
       setIsProcessing(false);
     }

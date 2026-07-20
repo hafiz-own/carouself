@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { db } from '../../db';
-import { entries } from '../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { entries, users } from '../../db/schema';
+import { eq, and, desc, sql, lt } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 import { protectedProcedure, router } from '../trpc';
 
 export const entryRouter = router({
@@ -10,10 +11,17 @@ export const entryRouter = router({
       id: z.string().uuid().optional(),
       ciphertext: z.string(),
       nonce: z.string(),
-      date: z.string() // Format YYYY-MM-DD
+      date: z.string(), // Format YYYY-MM-DD
+      wordCountDiff: z.number().optional()
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
+
+      if (input.wordCountDiff !== undefined && input.wordCountDiff !== 0) {
+        await db.update(users)
+          .set({ totalWords: sql`GREATEST(${users.totalWords} + ${input.wordCountDiff}, 0)` })
+          .where(eq(users.id, userId));
+      }
 
       if (input.id) {
         // Update existing entry
@@ -23,7 +31,7 @@ export const entryRouter = router({
         );
 
         if (existing.length === 0) {
-          throw new Error("Entry not found or unauthorized");
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Entry not found or unauthorized' });
         }
 
         const [updated] = await db.update(entries)
@@ -62,10 +70,10 @@ export const entryRouter = router({
         createdAt: entries.createdAt
       })
       .from(entries)
-      .where(eq(entries.userId, userId));
+      .where(eq(entries.userId, userId))
+      .orderBy(desc(entries.createdAt));
       
-      // Sort in memory by createdAt desc (or date desc if createdAt is somehow same)
-      return metadataList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return metadataList;
     }),
 
   getEntryById: protectedProcedure
@@ -79,7 +87,7 @@ export const entryRouter = router({
       );
 
       if (result.length === 0) {
-        throw new Error("Entry not found");
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Entry not found' });
       }
 
       return result[0];
@@ -88,15 +96,42 @@ export const entryRouter = router({
   getAllEntries: protectedProcedure
     .query(async ({ ctx }) => {
       const userId = ctx.user.id;
-      const allEntries = await db.select().from(entries).where(eq(entries.userId, userId));
-      
-      // Sort in memory by date desc
-      return allEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return await db.select().from(entries)
+        .where(eq(entries.userId, userId))
+        .orderBy(desc(entries.date));
+    }),
+
+  getEntries: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).nullish(),
+      cursor: z.date().nullish(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      const limit = input.limit ?? 50;
+
+      const items = await db.select().from(entries)
+        .where(
+          input.cursor 
+            ? and(eq(entries.userId, userId), lt(entries.createdAt, input.cursor)) 
+            : eq(entries.userId, userId)
+        )
+        .orderBy(desc(entries.createdAt))
+        .limit(limit + 1);
+
+      let nextCursor: Date | undefined = undefined;
+      if (items.length > limit) {
+        items.pop();
+        nextCursor = items[items.length - 1].createdAt;
+      }
+
+      return { items, nextCursor };
     }),
 
   deleteEntry: protectedProcedure
     .input(z.object({
-      id: z.string().uuid()
+      id: z.string().uuid(),
+      wordCountToSubtract: z.number().optional()
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
@@ -106,9 +141,21 @@ export const entryRouter = router({
       ).returning();
       
       if (result.length === 0) {
-        throw new Error("Entry not found or unauthorized");
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Entry not found or unauthorized' });
+      }
+
+      if (input.wordCountToSubtract) {
+        await db.update(users)
+          .set({ totalWords: sql`GREATEST(${users.totalWords} - ${input.wordCountToSubtract}, 0)` })
+          .where(eq(users.id, userId));
       }
       
       return { success: true };
+    }),
+  getStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user.id;
+      const result = await db.select({ totalWords: users.totalWords }).from(users).where(eq(users.id, userId));
+      return { totalWords: result[0]?.totalWords || 0 };
     })
 });

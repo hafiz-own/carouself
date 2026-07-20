@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Lock, Shield, PenTool, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, HardDriveDownload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -20,6 +21,7 @@ export default function LandingPage() {
   const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
@@ -50,7 +52,7 @@ export default function LandingPage() {
     setFormStatus('submitting');
     
     const formData = new FormData(e.currentTarget);
-    formData.append("access_key", process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "YOUR_ACCESS_KEY_HERE");
+    formData.append("access_key", process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || "YOUR_ACCESS_KEY_HERE");
 
     try {
       const response = await fetch("https://api.web3forms.com/submit", {
@@ -89,7 +91,7 @@ export default function LandingPage() {
           transition={{ duration: 1.5 }}
           className="absolute inset-0 z-0 overflow-hidden opacity-40 dark:opacity-50 pointer-events-none"
         >
-          <img src="/images/hero_bg.png" className="w-full h-full object-cover blur-sm scale-105" alt="Hero background" />
+          <Image src="/images/hero_bg.png" fill className="object-cover blur-sm scale-105" alt="Hero background" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-50 via-neutral-50/60 dark:from-neutral-950 dark:via-neutral-950/60 to-transparent" />
         </motion.div>
 
@@ -149,10 +151,10 @@ export default function LandingPage() {
             <p className="text-neutral-500">Reflect on your past entries beautifully.</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => scrollCarousel('left')} className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
+            <button onClick={() => scrollCarousel('left')} aria-label="Previous slide" className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
               <ChevronLeft size={24} />
             </button>
-            <button onClick={() => scrollCarousel('right')} className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
+            <button onClick={() => scrollCarousel('right')} aria-label="Next slide" className="p-3 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-sm active:scale-95">
               <ChevronRight size={24} />
             </button>
           </div>
@@ -170,7 +172,7 @@ export default function LandingPage() {
             >
               <div className="h-[55%] relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10" />
-                <img src={entry.image} alt={entry.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <Image src={entry.image} alt={entry.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute top-6 left-6 z-20 bg-black/40 backdrop-blur-md text-white text-xs font-bold font-mono px-3 py-1.5 rounded-full border border-white/20">
                   {entry.date}
                 </div>
@@ -213,7 +215,7 @@ export default function LandingPage() {
             className="md:col-span-2 bg-gradient-to-br from-neutral-100 to-white dark:from-neutral-900 dark:to-black border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl relative overflow-hidden group"
           >
             <div className="absolute inset-0 opacity-10 dark:opacity-[0.05] group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity duration-700">
-              <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1200" alt="Code crypto" className="w-full h-full object-cover" />
+              <Image src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1200" alt="Code crypto" fill unoptimized className="object-cover" />
             </div>
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity duration-500 z-10">
               <Shield size={200} className="text-amber-500" />
@@ -289,7 +291,7 @@ export default function LandingPage() {
             className="md:col-span-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 md:p-12 rounded-3xl flex flex-col justify-between relative overflow-hidden group hover:border-blue-500/30 transition-colors"
           >
             <div className="absolute inset-0 opacity-10 dark:opacity-[0.03] group-hover:opacity-20 dark:group-hover:opacity-10 transition-opacity duration-700">
-              <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1200" alt="Server tech" className="w-full h-full object-cover" />
+              <Image src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?q=80&w=1200" alt="Server tech" fill unoptimized className="object-cover" />
             </div>
 
             <div className="relative z-20 max-w-md">

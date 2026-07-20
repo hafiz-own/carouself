@@ -6,7 +6,10 @@ const handler = (req: Request) =>
     endpoint: '/api/trpc',
     req,
     router: appRouter,
-    createContext: () => ({}),
+    createContext: () => {
+      const ip = req.headers.get('x-vercel-forwarded-for') || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+      return { req, ip };
+    },
   });
 
 export { handler as GET, handler as POST };

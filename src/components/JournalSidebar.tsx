@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { trpc } from '@/lib/trpc/client';
-import { Calendar, PlusCircle, Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, Plus, PenTool, Sun, Moon } from 'lucide-react';
-import { useEncryption } from '@/lib/crypto/EncryptionContext';
+import { Search, X, Settings, MoreVertical, Edit2, Trash2, PanelLeftClose, PenTool, Sun, Moon } from 'lucide-react';
 import { decryptEntry, encryptEntry } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
 import { SettingsModal } from './SettingsModal';
@@ -34,11 +33,9 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [decryptedEntries, setDecryptedEntries] = useState<DecryptedEntry[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
-  }, []);
+  const [isDark, setIsDark] = useState(
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  );
 
   const toggleTheme = () => {
     if (isDark) {
@@ -60,7 +57,12 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
   const saveMutation = trpc.entry.saveEntry.useMutation();
   const deleteMutation = trpc.entry.deleteEntry.useMutation();
 
-  const { data: rawEntries, isLoading, error } = trpc.entry.getAllEntries.useQuery();
+  const { data: rawPages, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } = trpc.entry.getEntries.useInfiniteQuery(
+    { limit: 50 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
+  
+  const rawEntries = useMemo(() => rawPages?.pages.flatMap(page => page.items) || [], [rawPages]);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const initiateRename = (entry: DecryptedEntry, e: React.MouseEvent) => {
@@ -81,13 +83,21 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
       const nonceBytes = sodium.from_hex(rawEntry.nonce);
       const plaintext = decryptEntry(ciphertextBytes, nonceBytes, encKey);
       
+      let parsed: Record<string, unknown> = {};
       let content = plaintext;
       try {
          const p = JSON.parse(plaintext);
-         if (p.content !== undefined) content = p.content;
-      } catch (e) {}
+         if (typeof p === 'object' && p !== null) {
+            parsed = p as Record<string, unknown>;
+            if ('content' in parsed && typeof parsed.content === 'string') {
+               content = parsed.content;
+            }
+         }
+      } catch (e) {
+         // Ignore
+      }
 
-      const payload = JSON.stringify({ title: newTitle, content });
+      const payload = JSON.stringify({ ...parsed, title: newTitle, content });
       const { ciphertext: newCiphertext, nonce: newNonce } = encryptEntry(payload, encKey);
       
       await saveMutation.mutateAsync({
@@ -96,7 +106,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
         nonce: sodium.to_hex(newNonce),
         date: entry.date
       });
-      trpcUtils.entry.getAllEntries.invalidate();
+      trpcUtils.entry.getEntries.invalidate();
     } catch (error) {
       console.error('Rename failed', error);
       setAlertMessage({ title: 'Error', message: 'Failed to rename entry. Did your key change?' });
@@ -113,7 +123,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
     if (!entryToDelete) return;
     try {
       await deleteMutation.mutateAsync({ id: entryToDelete });
-      trpcUtils.entry.getAllEntries.invalidate();
+      trpcUtils.entry.getEntries.invalidate();
       if (selectedEntryId === entryToDelete) {
         onSelectEntry(null);
       }
@@ -174,7 +184,9 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
     if (!searchQuery.trim()) {
+      // eslint-disable-next-line
       setIsSearching(false);
+      // eslint-disable-next-line
       setSearchResults(null);
       return;
     }
@@ -222,7 +234,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
   return (
     <>
       <div className={`fixed inset-y-0 left-0 z-50 md:relative transition-all duration-300 ease-in-out border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 flex flex-col h-screen overflow-hidden ${isOpen ? 'w-[85vw] max-w-[320px] md:w-80 opacity-100 translate-x-0' : 'w-[85vw] max-w-[320px] md:w-0 opacity-0 md:border-r-0 -translate-x-full md:translate-x-0'}`}>
-        <div className="w-80 min-w-[320px] flex flex-col h-screen overflow-y-auto">
+        <div className="w-full max-w-[320px] md:w-80 flex flex-col h-screen overflow-y-auto">
         <div className="p-4 pb-2 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between px-2 mb-4">
@@ -285,10 +297,10 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
             )}
             
             {searchResults?.map((result) => (
-              <div
+              <button
                 key={result.id}
                 onClick={() => onSelectEntry(result.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group ${
+                className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                   selectedEntryId === result.id
                     ? 'bg-neutral-100 dark:bg-neutral-800 text-amber-300 shadow-inner'
                     : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200'
@@ -331,7 +343,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                     </button>
                   </div>
                 )}
-              </div>
+              </button>
             ))}
           </>
         ) : (
@@ -341,10 +353,10 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
               <div className="px-2 text-sm text-neutral-600">No entries yet.</div>
             ) : (
               decryptedEntries.map((entry) => (
-                <div
+                <button
                   key={entry.id}
                   onClick={() => onSelectEntry(entry.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group ${
+                  className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                     selectedEntryId === entry.id
                       ? 'bg-neutral-100 dark:bg-neutral-800 text-amber-300 shadow-inner'
                       : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200'
@@ -390,8 +402,18 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                       </button>
                     </div>
                   )}
-                </div>
+                </button>
               ))
+            )}
+            
+            {!searchQuery && hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="w-full py-2 mt-4 text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors disabled:opacity-50"
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load Older Entries'}
+              </button>
             )}
           </>
         )}

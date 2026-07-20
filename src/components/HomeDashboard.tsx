@@ -9,7 +9,7 @@ import { Calendar, PenTool, TrendingUp, ChevronLeft, ChevronRight } from 'lucide
 
 interface HomeDashboardProps {
   encKey: Uint8Array;
-  onSelectEntry: (id: string) => void;
+  onSelectEntry: (id: string | null) => void;
   email: string;
   onStartTemplate?: (title: string, content: string) => void;
 }
@@ -25,18 +25,20 @@ interface DecryptedFullEntry {
 }
 
 export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }: HomeDashboardProps) {
-  const { data: rawEntries, isLoading } = trpc.entry.getAllEntries.useQuery();
-  const [entries, setEntries] = useState<DecryptedFullEntry[]>([]);
+  const { data: statsData } = trpc.entry.getStats.useQuery();
+  const { data: metadataList, isLoading: isMetadataLoading } = trpc.entry.getEntriesMetadata.useQuery();
+  const { data: recentEntriesData, isLoading: isEntriesLoading } = trpc.entry.getEntries.useQuery({ limit: 5 });
+  
   const [isDecrypting, setIsDecrypting] = useState(true);
   
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [carouselItems, setCarouselItems] = useState<DecryptedFullEntry[]>([]);
 
   useEffect(() => {
-    if (!rawEntries || !encKey) return;
+    if (!recentEntriesData || !encKey) return;
     
     const processEntries = () => {
-      const decrypted = rawEntries.map(entry => {
+      const decrypted = recentEntriesData.items.map(entry => {
         try {
           const ciphertextBytes = sodium.from_hex(entry.ciphertext);
           const nonceBytes = sodium.from_hex(entry.nonce);
@@ -63,18 +65,14 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
         }
       });
       
-      decrypted.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setEntries(decrypted);
-      
-      const shuffled = [...decrypted].sort(() => 0.5 - Math.random());
-      setCarouselItems(shuffled.slice(0, 5));
+      setCarouselItems(decrypted);
       setIsDecrypting(false);
     };
 
     processEntries();
-  }, [rawEntries, encKey]);
+  }, [recentEntriesData, encKey]);
 
-  if (isLoading || isDecrypting) {
+  if (isMetadataLoading || isEntriesLoading || isDecrypting) {
     return (
       <div className="w-full max-w-4xl flex-1 flex flex-col items-center justify-center p-8 animate-pulse space-y-8">
         <div className="w-full h-64 bg-neutral-200 dark:bg-neutral-800 rounded-[2rem]"></div>
@@ -87,14 +85,14 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
     );
   }
 
-  const totalEntries = entries.length;
-  const totalWords = entries.reduce((acc, curr) => acc + curr.wordCount, 0);
+  const totalEntries = metadataList?.length || 0;
+  const totalWords = statsData?.totalWords || 0;
   
   let streak = 0;
   const today = new Date();
   today.setHours(0,0,0,0);
   
-  const dates = entries.map(e => {
+  const dates = (metadataList || []).map(e => {
     const d = new Date(e.date);
     d.setHours(0,0,0,0);
     return d.getTime();
@@ -103,7 +101,7 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
   const uniqueDates = Array.from(new Set(dates)).sort((a,b) => b - a);
   
   if (uniqueDates.length > 0) {
-    let currentDate = today.getTime();
+    const currentDate = today.getTime();
     if (uniqueDates[0] === currentDate || uniqueDates[0] === currentDate - 86400000) {
       streak = 1;
       let checkDate = uniqueDates[0];
@@ -134,7 +132,7 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
         </div>
         
         <button 
-          onClick={() => onSelectEntry(null as unknown as string)}
+          onClick={() => onSelectEntry(null)}
           className="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center space-x-2"
         >
           <PenTool size={20} />
@@ -148,7 +146,18 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
             <ChevronLeft size={24} />
           </button>
 
-          <div className="w-full h-full relative overflow-hidden rounded-[2rem] shadow-2xl group cursor-pointer" onClick={() => onSelectEntry(carouselItems[carouselIndex].id)}>
+          <div 
+            className="w-full h-full relative overflow-hidden rounded-[2rem] shadow-2xl group cursor-pointer focus:outline-none focus:ring-4 focus:ring-amber-500" 
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectEntry(carouselItems[carouselIndex].id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectEntry(carouselItems[carouselIndex].id);
+              }
+            }}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-purple-500/20 dark:from-amber-500/10 dark:to-purple-500/10" />
             
             <AnimatePresence mode="wait">
@@ -175,7 +184,7 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
                   {carouselItems[carouselIndex].title}
                 </h2>
                 <p className="text-base md:text-lg text-neutral-700 dark:text-neutral-300 line-clamp-2 md:line-clamp-3 leading-relaxed font-serif italic">
-                  "{carouselItems[carouselIndex].content.substring(0, 200)}..."
+                  &quot;{carouselItems[carouselIndex].content.substring(0, 200)}...&quot;
                 </p>
                 <div className="absolute bottom-6 right-8 text-neutral-400 group-hover:text-amber-500 transition-colors font-medium text-sm flex items-center space-x-1 opacity-0 group-hover:opacity-100">
                   <span>Open Entry</span> <ChevronRight size={16} />

@@ -1,55 +1,56 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { db } from '../../db';
-import { users } from '../../db/schema';
+import { users, entries, rateLimits } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { createHash, createHmac } from 'crypto';
 import { cookies } from 'next/headers';
 import { signToken } from '../../auth/jwt';
 import { publicProcedure, protectedProcedure, router } from '../trpc';
 
-// Simple in-memory rate limiter for login
-// In a real multi-server environment, use Redis or a DB table
-const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
-
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_ATTEMPTS = 5;
 
-function getClientIp(): string {
-  // Since we don't have access to the raw request in this minimal tRPC setup by default,
-  // we'll use a placeholder "unknown" or in the future inject it via Context.
-  // For the MVP, if everyone falls under "unknown", rate limiting applies globally.
-  // Ideally, context should inject the req.headers['x-forwarded-for'].
-  // But for this requirement without rewriting context, we'll implement a basic one.
-  return "global"; 
-}
+async function checkRateLimit(ip: string) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW);
 
-function checkRateLimit(ip: string) {
-  const now = Date.now();
-  const record = loginAttempts.get(ip);
-  if (!record) {
-    loginAttempts.set(ip, { count: 1, firstAttempt: now });
+  const existingRecord = await db.select().from(rateLimits).where(eq(rateLimits.ip, ip));
+
+  if (existingRecord.length === 0) {
+    await db.insert(rateLimits).values({
+      ip,
+      attempts: 1,
+      firstAttemptAt: now
+    });
     return;
   }
-  
-  if (now - record.firstAttempt > RATE_LIMIT_WINDOW) {
+
+  const record = existingRecord[0];
+
+  if (record.firstAttemptAt < windowStart) {
     // Reset window
-    loginAttempts.set(ip, { count: 1, firstAttempt: now });
+    await db.update(rateLimits).set({
+      attempts: 1,
+      firstAttemptAt: now
+    }).where(eq(rateLimits.ip, ip));
     return;
   }
-  
-  if (record.count >= MAX_ATTEMPTS) {
+
+  if (record.attempts >= MAX_ATTEMPTS) {
     throw new TRPCError({
       code: 'TOO_MANY_REQUESTS',
       message: 'Too many login attempts. Please try again later.',
     });
   }
-  
-  record.count += 1;
+
+  await db.update(rateLimits).set({
+    attempts: record.attempts + 1
+  }).where(eq(rateLimits.ip, ip));
 }
 
-function resetRateLimit(ip: string) {
-  loginAttempts.delete(ip);
+async function resetRateLimit(ip: string) {
+  await db.delete(rateLimits).where(eq(rateLimits.ip, ip));
 }
 
 export const authRouter = router({
@@ -114,17 +115,30 @@ export const authRouter = router({
         };
       }
       
+      if (!process.env.JWT_SECRET) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Server configuration error' });
+      }
+
       // Prevent user enumeration by generating a deterministic fake salt
-      // Ensure we always return exactly 32 hex chars (16 bytes)
-      const fakeSalt = createHmac('sha256', process.env.JWT_SECRET || 'fallback_secret')
+      const fakeSalt = createHmac('sha256', process.env.JWT_SECRET)
         .update(input.email)
         .digest('hex')
         .substring(0, 32);
         
+      const fakeEncryptedDek = createHmac('sha256', process.env.JWT_SECRET)
+        .update(input.email + 'dek')
+        .digest('hex')
+        .substring(0, 80);
+
+      const fakeNonce = createHmac('sha256', process.env.JWT_SECRET)
+        .update(input.email + 'nonce')
+        .digest('hex')
+        .substring(0, 48);
+        
       return { 
         salt: fakeSalt,
-        encryptedDek: fakeSalt,
-        dekNonce: fakeSalt.substring(0, 24)
+        encryptedDek: fakeEncryptedDek,
+        dekNonce: fakeNonce
       };
     }),
 
@@ -133,9 +147,9 @@ export const authRouter = router({
       email: z.string().email(),
       authKey: z.string()
     }))
-    .mutation(async ({ input }) => {
-      const ip = getClientIp();
-      checkRateLimit(ip);
+    .mutation(async ({ input, ctx }) => {
+      const ip = ctx.ip || 'unknown';
+      await checkRateLimit(ip);
 
       const existingUser = await db.select().from(users).where(eq(users.email, input.email));
       
@@ -159,7 +173,7 @@ export const authRouter = router({
       }
 
       // Success
-      resetRateLimit(ip);
+      await resetRateLimit(ip);
 
       const token = await signToken({ userId: user.id });
       const cookieStore = await cookies();
@@ -195,8 +209,6 @@ export const authRouter = router({
       const userId = ctx.user.id;
       
       // Delete all entries for the user
-      // Require importing `entries` from schema
-      const { entries } = await import('../../db/schema');
       await db.delete(entries).where(eq(entries.userId, userId));
       
       // Delete the user
@@ -211,12 +223,23 @@ export const authRouter = router({
 
   changePassword: protectedProcedure
     .input(z.object({
+      oldAuthKey: z.string(),
       newAuthKey: z.string(),
       newSalt: z.string(),
       newEncryptedDek: z.string(),
       newDekNonce: z.string()
     }))
     .mutation(async ({ ctx, input }) => {
+      const existingUser = await db.select().from(users).where(eq(users.id, ctx.user.id));
+      if (existingUser.length === 0) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
+
+      const incomingOldAuthKeyHash = createHash('sha256').update(input.oldAuthKey).digest('hex');
+      if (existingUser[0].authKeyHash !== incomingOldAuthKeyHash) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Incorrect current password' });
+      }
+
       const newAuthKeyHash = createHash('sha256').update(input.newAuthKey).digest('hex');
       
       await db.update(users)

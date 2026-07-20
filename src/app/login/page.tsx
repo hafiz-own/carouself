@@ -32,8 +32,8 @@ export default function LoginPage() {
     
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      const fieldErrors: any = {};
-      parsed.error.issues.forEach((err: any) => {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((err: z.ZodIssue) => {
         if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
       });
       setErrors(fieldErrors);
@@ -49,6 +49,9 @@ export default function LoginPage() {
       // 2. Fetch the salt and encrypted DEK
       const { salt: hexSalt, encryptedDek, dekNonce } = await utils.client.auth.getSalt.query({ email });
       const saltBytes = sodium.from_hex(hexSalt);
+
+      // Yield to the event loop so the browser can paint the loading state
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // 3. Client-side cryptography
       const masterKey = await deriveMasterKey(password, saltBytes);
@@ -74,9 +77,9 @@ export default function LoginPage() {
       // 5. Navigate to journal
       router.push('/journal');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Show generic error for invalid credentials or specific error for rate limit
-      const message = err.message || 'Invalid credentials';
+      const message = err instanceof Error ? err.message : 'Invalid credentials';
       setErrors({ general: message });
       toast.error(message);
     } finally {
@@ -105,8 +108,9 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
+              <label htmlFor="email" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -117,8 +121,9 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 ml-1">Master Password</label>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import FocusLock from 'react-focus-lock';
 
 export function ConfirmDialog({
   isOpen,
@@ -22,8 +23,9 @@ export function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
+    <FocusLock returnFocus>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
         <div className="p-6">
           <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">{title}</h3>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">{message}</p>
@@ -47,7 +49,8 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </FocusLock>
   );
 }
 
@@ -71,18 +74,21 @@ export function PromptDialog({
   onClose: () => void;
 }) {
   const [value, setValue] = useState(defaultValue);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-  useEffect(() => {
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setValue(defaultValue);
     }
-  }, [isOpen, defaultValue]);
+  }
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
+    <FocusLock returnFocus>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
         <div className="p-6">
           <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-4">{title}</h3>
           {label && <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">{label}</label>}
@@ -117,7 +123,8 @@ export function PromptDialog({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </FocusLock>
   );
 }
 
@@ -137,8 +144,9 @@ export function AlertDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
+    <FocusLock returnFocus>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl w-[95vw] max-w-sm sm:max-w-md overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200 m-4">
         <div className="p-6">
           <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">{title}</h3>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">{message}</p>
@@ -152,6 +160,7 @@ export function AlertDialog({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </FocusLock>
   );
 }

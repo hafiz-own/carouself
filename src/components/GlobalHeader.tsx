@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function GlobalHeader() {
   const pathname = usePathname();
@@ -18,7 +19,7 @@ export function GlobalHeader() {
       <div className="pointer-events-auto">
         {pathname !== '/' && (
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src="/images/carouself_icon.png" alt="carouself icon" className="w-8 h-8 rounded-lg" />
+            <Image src="/images/carouself_icon.png" alt="carouself icon" width={32} height={32} className="w-8 h-8 rounded-lg" />
             <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-amber-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               carouself
             </span>

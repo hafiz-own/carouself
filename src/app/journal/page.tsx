@@ -28,6 +28,7 @@ export default function JournalPage() {
   // Auto-close sidebar on mobile load
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSidebarOpen(false);
     }
   }, []);
@@ -146,7 +147,7 @@ export default function JournalPage() {
 
   // Ready to write!
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex overflow-hidden relative">
+    <div className="h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex overflow-hidden relative">
       {/* Mobile Backdrop */}
       {isSidebarOpen && (
         <div 

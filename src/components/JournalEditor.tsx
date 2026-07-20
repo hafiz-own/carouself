@@ -33,6 +33,17 @@ interface JournalEditorProps {
 const MOODS = ['😌', '😊', '😂', '😎', '🤔', '😔', '😭', '😡', '😴', '🤯'];
 const WEATHERS = ['☀️', '🌤️', '☁️', '🌧️', '⛈️', '🌨️', '💨', '🌫️'];
 
+const ToolbarButton = ({ onClick, isActive, disabled, children }: { onClick: () => void, isActive?: boolean, disabled?: boolean, children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`p-2 rounded-lg transition-colors ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${isActive ? 'bg-amber-600 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
+    type="button"
+  >
+    {children}
+  </button>
+);
+
 export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete }: JournalEditorProps) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'unsaved'>('saved');
   const [entryId, setEntryId] = useState<string | undefined>(initialEntryId);
@@ -48,6 +59,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
 
   // Debounce ref
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedWordCountRef = useRef<number>(0);
   
   // Track latest state so we can flush saves on unmount or entry switch
   const stateRef = useRef({ 
@@ -126,7 +138,9 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   };
 
   // Keep stateRef in sync with the latest state
-  stateRef.current = { title, content: editor?.getHTML() || '', mood, weather, entryId, saveStatus };
+  useEffect(() => {
+    stateRef.current = { title, content: editor?.getHTML() || '', mood, weather, entryId, saveStatus };
+  }, [title, editor, mood, weather, entryId, saveStatus]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -142,6 +156,11 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     const isBackgroundSave = targetEntryId !== undefined;
     const saveId = isBackgroundSave ? targetEntryId : entryId;
     
+    // Convert html to plain text to count words
+    const plainText = convert(htmlContent, { wordwrap: false });
+    const currentWordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
+    const wordCountDiff = currentWordCount - lastSavedWordCountRef.current;
+    
     if (!isBackgroundSave) setSaveStatus('saving');
     try {
       const payload = JSON.stringify({ title: currentTitle, content: htmlContent, mood: currentMood, weather: currentWeather });
@@ -152,8 +171,11 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         id: saveId,
         ciphertext: sodium.to_hex(ciphertext),
         nonce: sodium.to_hex(nonce),
-        date: today
+        date: today,
+        wordCountDiff
       });
+
+      lastSavedWordCountRef.current = currentWordCount;
 
       if (!isBackgroundSave) {
         if (!entryId && result.id) {
@@ -168,22 +190,12 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     }
   };
 
-  // Hydrate editor when entry changes
+  const handleSaveRef = useRef(handleSave);
   useEffect(() => {
-    // If we have unsaved work for a different entry, immediately trigger a background save
-    if (stateRef.current.saveStatus === 'unsaved' && stateRef.current.entryId !== initialEntryId) {
-      handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
-    }
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
-    if (editor && initialContent !== editor.getHTML()) {
-      editor.commands.setContent(initialContent);
-    }
-    setTitle(initialTitle);
-    setMood(initialMood);
-    setWeather(initialWeather);
-    setEntryId(initialEntryId);
-    setSaveStatus('saved');
-  }, [editor, initialTitle, initialContent, initialMood, initialWeather, initialEntryId]);
+
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isLinkPromptOpen, setIsLinkPromptOpen] = useState(false);
@@ -195,7 +207,10 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
     setIsDeleting(true);
     try {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      await deleteMutation.mutateAsync({ id: entryId });
+      await deleteMutation.mutateAsync({ 
+        id: entryId,
+        wordCountToSubtract: lastSavedWordCountRef.current 
+      });
       trpcUtils.entry.getAllEntries.invalidate();
       if (onDelete) onDelete();
     } catch (error) {
@@ -224,7 +239,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         clearTimeout(debounceTimerRef.current);
       }
       if (stateRef.current.saveStatus === 'unsaved') {
-        handleSave(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
+        handleSaveRef.current(stateRef.current.title, stateRef.current.content, stateRef.current.mood, stateRef.current.weather, stateRef.current.entryId);
       }
     };
   }, []);
@@ -232,17 +247,6 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   if (!editor) {
     return null;
   }
-
-  const ToolbarButton = ({ onClick, isActive, disabled, children }: { onClick: () => void, isActive?: boolean, disabled?: boolean, children: React.ReactNode }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`p-2 rounded-lg transition-colors ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${isActive ? 'bg-amber-600 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
-      type="button"
-    >
-      {children}
-    </button>
-  );
 
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;

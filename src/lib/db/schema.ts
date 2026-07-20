@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, varchar, date } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, varchar, date, integer, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -9,6 +9,13 @@ export const users = pgTable('users', {
   dekNonce: varchar('dek_nonce', { length: 255 }).notNull(),
   recoveryKeyHash: varchar('recovery_key_hash', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  totalWords: integer('total_words').default(0).notNull(),
+});
+
+export const rateLimits = pgTable('rate_limits', {
+  ip: varchar('ip', { length: 255 }).primaryKey(),
+  attempts: integer('attempts').default(1).notNull(),
+  firstAttemptAt: timestamp('first_attempt_at').defaultNow().notNull(),
 });
 
 export const entries = pgTable('entries', {
@@ -19,9 +26,8 @@ export const entries = pgTable('entries', {
   date: date('date').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('entries_user_id_idx').on(table.userId),
+  index('entries_user_date_idx').on(table.userId, table.date),
+]);
 
-export const testTable = pgTable('test_table', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  message: text('message').notNull(),
-});
