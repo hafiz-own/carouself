@@ -214,23 +214,34 @@ export default function JournalPage() {
                   <span className="mt-px">Dashboard</span>
                 </button>
               </div>
-              <JournalEditor 
-                key={`editor-${editorResetKey}`}
-                encKey={encKey} 
-                initialTitle={activeTitle}
-                initialContent={activeContent} 
-                initialMood={activeMood}
-                initialWeather={activeWeather}
-                entryId={selectedEntryId} 
-                onDelete={() => {
-                  handleSelectEntry('dashboard');
-                }}
-                onSaveSuccess={(newId) => {
-                  if (!selectedEntryId) {
-                    setSelectedEntryId(newId);
-                  }
-                }}
-              />
+              {isDecrypting ? (
+                <div className="w-full max-w-4xl mx-auto bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-[2rem] p-8 md:p-12 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none min-h-[60vh] flex flex-col space-y-6 animate-pulse">
+                  <div className="h-12 bg-neutral-200 dark:bg-neutral-800 rounded-lg w-1/3 mb-6"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-full"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-5/6"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-4/6"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-full mt-4"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <JournalEditor 
+                  key={`editor-${selectedEntryId || 'new'}-${editorResetKey}`}
+                  encKey={encKey} 
+                  initialTitle={activeTitle}
+                  initialContent={activeContent} 
+                  initialMood={activeMood}
+                  initialWeather={activeWeather}
+                  entryId={selectedEntryId} 
+                  onDelete={() => {
+                    handleSelectEntry('dashboard');
+                  }}
+                  onSaveSuccess={(newId) => {
+                    if (!selectedEntryId) {
+                      setSelectedEntryId(newId);
+                    }
+                  }}
+                />
+              )}
             </div>
           )}
         </div>
