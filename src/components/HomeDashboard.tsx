@@ -133,9 +133,9 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
         
         <button 
           onClick={() => onSelectEntry(null)}
-          className="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-bold rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center space-x-2"
+          className="px-6 py-3 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-semibold text-sm rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center space-x-2"
         >
-          <PenTool size={20} />
+          <PenTool size={18} />
           <span>Start Writing</span>
         </button>
       </div>
@@ -147,7 +147,7 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
           </button>
 
           <div 
-            className="w-full h-full relative overflow-hidden rounded-[2rem] shadow-2xl group cursor-pointer focus:outline-none focus:ring-4 focus:ring-amber-500" 
+            className="w-full h-full relative overflow-hidden rounded-[2rem] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-none border border-black/[0.04] dark:border-white/5 bg-white dark:bg-[#12121e] group cursor-pointer focus:outline-none" 
             role="button"
             tabIndex={0}
             onClick={() => onSelectEntry(carouselItems[carouselIndex].id)}
@@ -158,26 +158,25 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
               }
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-purple-500/20 dark:from-amber-500/10 dark:to-purple-500/10" />
             
             <AnimatePresence mode="wait">
               <motion.div
                 key={carouselIndex}
-                initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                initial={{ opacity: 0, scale: 0.98, x: 20 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute inset-0 p-8 md:p-10 flex flex-col justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/40 dark:border-white/10"
+                exit={{ opacity: 0, scale: 0.98, x: -20 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 p-8 md:p-10 flex flex-col justify-center bg-transparent"
               >
                 <div className="flex items-center space-x-3 mb-4 md:mb-6">
-                  <div className="px-3 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold uppercase tracking-widest flex items-center space-x-2">
+                  <div className="px-2 py-1 bg-black/[0.03] dark:bg-white/5 border border-black/[0.04] dark:border-white/5 text-neutral-500 dark:text-neutral-400 rounded text-[10px] font-mono tracking-widest uppercase flex items-center space-x-2">
                     <span>Memory</span>
                     {(carouselItems[carouselIndex].mood || carouselItems[carouselIndex].weather) && (
-                      <span className="text-base leading-none -mt-0.5">{carouselItems[carouselIndex].mood} {carouselItems[carouselIndex].weather}</span>
+                      <span className="text-sm leading-none -mt-px">{carouselItems[carouselIndex].mood} {carouselItems[carouselIndex].weather}</span>
                     )}
                   </div>
-                  <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                    {new Date(carouselItems[carouselIndex].date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  <span className="text-[11px] font-mono tracking-widest uppercase text-neutral-400 dark:text-neutral-500">
+                    {new Date(carouselItems[carouselIndex].date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                   </span>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-neutral-900 dark:text-neutral-100 mb-4 line-clamp-1">
@@ -207,33 +206,33 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-0">
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg flex items-center space-x-4 transition-transform hover:-translate-y-1">
-          <div className="p-4 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl">
-            <Calendar size={28} />
+        <div className="bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none flex items-center space-x-4 transition-transform hover:-translate-y-1">
+          <div className="text-neutral-800 dark:text-neutral-200">
+            <Calendar size={24} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Entries</p>
-            <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">{totalEntries}</p>
+            <p className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 dark:text-neutral-500 mb-1">Total Entries</p>
+            <p className="text-3xl font-mono font-medium tracking-tighter text-neutral-900 dark:text-neutral-100">{totalEntries}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg flex items-center space-x-4 transition-transform hover:-translate-y-1">
-          <div className="p-4 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl">
-            <PenTool size={28} />
+        <div className="bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none flex items-center space-x-4 transition-transform hover:-translate-y-1">
+          <div className="text-neutral-800 dark:text-neutral-200">
+            <PenTool size={24} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Words</p>
-            <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">{totalWords.toLocaleString()}</p>
+            <p className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 dark:text-neutral-500 mb-1">Total Words</p>
+            <p className="text-3xl font-mono font-medium tracking-tighter text-neutral-900 dark:text-neutral-100">{totalWords.toLocaleString()}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg flex items-center space-x-4 transition-transform hover:-translate-y-1">
-          <div className="p-4 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-xl">
-            <TrendingUp size={28} />
+        <div className="bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none flex items-center space-x-4 transition-transform hover:-translate-y-1">
+          <div className="text-neutral-800 dark:text-neutral-200">
+            <TrendingUp size={24} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Current Streak</p>
-            <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">{streak} <span className="text-lg font-medium text-neutral-400">Days</span></p>
+            <p className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 dark:text-neutral-500 mb-1">Current Streak</p>
+            <p className="text-3xl font-mono font-medium tracking-tighter text-neutral-900 dark:text-neutral-100">{streak} <span className="text-sm text-neutral-400 tracking-normal uppercase">Days</span></p>
           </div>
         </div>
       </div>
@@ -244,20 +243,20 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <button 
             onClick={() => onStartTemplate?.('Morning Reflection', '<h3>What are three things I am grateful for today?</h3><p></p><h3>What would make today great?</h3><p></p><h3>Daily Affirmation</h3><p></p>')}
-            className="text-left bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 transition-all group"
+            className="text-left bg-white dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none hover:border-black/20 dark:hover:border-white/20 hover:-translate-y-1 transition-all group"
           >
-            <div className="text-amber-500 mb-4 bg-amber-100 dark:bg-amber-500/20 w-12 h-12 rounded-xl flex items-center justify-center"><Calendar size={24} /></div>
-            <h3 className="font-bold text-lg mb-2 group-hover:text-amber-500 transition-colors">Morning Reflection</h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Start your day with intention and gratitude.</p>
+            <div className="text-neutral-800 dark:text-neutral-200 mb-4 bg-black/[0.03] dark:bg-white/5 border border-black/[0.04] dark:border-white/5 w-12 h-12 rounded-xl flex items-center justify-center"><Calendar size={20} strokeWidth={1.5} /></div>
+            <h3 className="font-bold text-lg mb-2 text-neutral-900 dark:text-white transition-colors">Morning Reflection</h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Start your day with intent and gratitude.</p>
           </button>
           
           <button 
-            onClick={() => onStartTemplate?.('Evening Review', '<h3>What went well today?</h3><p></p><h3>What could I have done better?</h3><p></p><h3>Thoughts before bed</h3><p></p>')}
-            className="text-left bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg hover:border-purple-500/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 transition-all group"
+            onClick={() => onStartTemplate?.('Evening Brain Dump', '<h3>Wins of the day</h3><ul><li></li></ul><h3>What didn\'t go well?</h3><ul><li></li></ul><h3>What\'s on my mind for tomorrow?</h3><p></p>')}
+            className="text-left bg-white dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none hover:border-black/20 dark:hover:border-white/20 hover:-translate-y-1 transition-all group"
           >
-            <div className="text-purple-500 mb-4 bg-purple-100 dark:bg-purple-500/20 w-12 h-12 rounded-xl flex items-center justify-center"><Calendar size={24} /></div>
-            <h3 className="font-bold text-lg mb-2 group-hover:text-purple-500 transition-colors">Evening Review</h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">Reflect on the day and clear your mind for sleep.</p>
+            <div className="text-neutral-800 dark:text-neutral-200 mb-4 bg-black/[0.03] dark:bg-white/5 border border-black/[0.04] dark:border-white/5 w-12 h-12 rounded-xl flex items-center justify-center"><PenTool size={20} strokeWidth={1.5} /></div>
+            <h3 className="font-bold text-lg mb-2 text-neutral-900 dark:text-white transition-colors">Evening Brain Dump</h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Clear your mind before sleep.</p>
           </button>
 
           <button 
@@ -271,10 +270,10 @@ export function HomeDashboard({ encKey, onSelectEntry, email, onStartTemplate }:
               const prompt = prompts[Math.floor(Math.random() * prompts.length)];
               onStartTemplate?.(prompt, '');
             }}
-            className="text-left bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-lg hover:border-blue-500/50 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10 transition-all group"
+            className="text-left bg-white dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/5 rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none hover:border-black/20 dark:hover:border-white/20 hover:-translate-y-1 transition-all group"
           >
-            <div className="text-blue-500 mb-4 bg-blue-100 dark:bg-blue-500/20 w-12 h-12 rounded-xl flex items-center justify-center"><PenTool size={24} /></div>
-            <h3 className="font-bold text-lg mb-2 group-hover:text-blue-500 transition-colors">Random Prompt</h3>
+            <div className="text-neutral-800 dark:text-neutral-200 mb-4 bg-black/[0.03] dark:bg-white/5 border border-black/[0.04] dark:border-white/5 w-12 h-12 rounded-xl flex items-center justify-center"><PenTool size={20} strokeWidth={1.5} /></div>
+            <h3 className="font-bold text-lg mb-2 text-neutral-900 dark:text-white transition-colors">Random Prompt</h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">Let the vault ask you a thought-provoking question.</p>
           </button>
         </div>

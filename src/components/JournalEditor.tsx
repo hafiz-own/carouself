@@ -28,6 +28,7 @@ interface JournalEditorProps {
   initialWeather?: string;
   entryId?: string;
   onDelete?: () => void;
+  onSaveSuccess?: (id: string) => void;
 }
 
 const MOODS = ['😌', '😊', '😂', '😎', '🤔', '😔', '😭', '😡', '😴', '🤯'];
@@ -37,14 +38,31 @@ const ToolbarButton = ({ onClick, isActive, disabled, children }: { onClick: () 
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`p-2 rounded-lg transition-colors ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${isActive ? 'bg-amber-600 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
+    className={`p-2 rounded-full transition-colors ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${isActive ? 'bg-black/10 dark:bg-white/10 text-neutral-900 dark:text-white' : 'text-neutral-500 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
     type="button"
   >
     {children}
   </button>
 );
 
-export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete }: JournalEditorProps) {
+const extensions = [
+  StarterKit.configure({
+    codeBlock: false,
+  }),
+  Placeholder.configure({
+    placeholder: 'Write your thoughts here...',
+    emptyEditorClass: 'is-editor-empty',
+  }),
+  Underline,
+  Highlight,
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  CodeBlock,
+  TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  Link.configure({ openOnClick: false }),
+];
+
+export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete, onSaveSuccess }: JournalEditorProps) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'unsaved'>('saved');
   const [entryId, setEntryId] = useState<string | undefined>(initialEntryId);
   const [title, setTitle] = useState(initialTitle);
@@ -72,24 +90,12 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   });
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Write your thoughts here...',
-        emptyEditorClass: 'is-editor-empty',
-      }),
-      Underline,
-      Highlight,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      CodeBlock,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Link.configure({ openOnClick: false }),
-    ],
+    extensions,
+    immediatelyRender: false,
     content: initialContent,
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert prose-amber max-w-none focus:outline-none min-h-[500px]',
+        class: 'prose dark:prose-invert prose-neutral max-w-none focus:outline-none min-h-[500px]',
       },
     },
     onUpdate: ({ editor }) => {
@@ -180,10 +186,11 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       if (!isBackgroundSave) {
         if (!entryId && result.id) {
           setEntryId(result.id);
+          if (onSaveSuccess) onSaveSuccess(result.id);
         }
         setSaveStatus('saved');
       }
-      trpcUtils.entry.getAllEntries.invalidate();
+      trpcUtils.entry.invalidate();
     } catch (error) {
       console.error('Autosave failed:', error);
       if (!isBackgroundSave) setSaveStatus('error');
@@ -211,7 +218,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
         id: entryId,
         wordCountToSubtract: lastSavedWordCountRef.current 
       });
-      trpcUtils.entry.getAllEntries.invalidate();
+      trpcUtils.entry.invalidate();
       if (onDelete) onDelete();
     } catch (error) {
       console.error('Failed to delete entry', error);
@@ -265,33 +272,33 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   return (
     <div className={
       isFullscreen
-        ? "fixed inset-0 z-[60] bg-neutral-50 dark:bg-neutral-950 p-4 sm:p-8 overflow-y-auto flex flex-col"
+        ? "fixed inset-0 z-[60] bg-[#f8f7f4] dark:bg-[#0a0a12] p-4 sm:p-8 overflow-y-auto flex flex-col"
         : "w-full max-w-4xl mx-auto flex flex-col"
     }>
       <div className={`flex flex-col space-y-4 w-full ${isFullscreen ? 'max-w-6xl mx-auto flex-1' : ''}`}>
       
       {/* Meta Bar: Mood & Weather */}
       <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2 shadow-sm flex items-center space-x-1 overflow-x-auto hide-scrollbar">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-widest pl-2 pr-1">Mood</span>
+        <div className="bg-white dark:bg-white/[0.02] border border-black/5 dark:border-white/5 rounded-full p-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)] dark:shadow-none flex items-center space-x-1 overflow-x-auto hide-scrollbar">
+          <span className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest pl-3 pr-2">Mood</span>
           {MOODS.map(m => (
             <button
               key={m}
               onClick={() => handleMoodChange(m)}
-              className={`p-1.5 rounded-lg text-lg transition-all ${mood === m ? 'bg-amber-100 dark:bg-amber-900/40 scale-110' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 grayscale hover:grayscale-0'}`}
+              className={`p-1.5 rounded-full text-lg transition-all ${mood === m ? 'bg-black/5 dark:bg-white/10 scale-110' : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02] grayscale hover:grayscale-0 opacity-50 hover:opacity-100'}`}
               title="Set Mood"
             >
               {m}
             </button>
           ))}
         </div>
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2 shadow-sm flex items-center space-x-1 overflow-x-auto hide-scrollbar">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-widest pl-2 pr-1">Weather</span>
+        <div className="bg-white dark:bg-white/[0.02] border border-black/5 dark:border-white/5 rounded-full p-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)] dark:shadow-none flex items-center space-x-1 overflow-x-auto hide-scrollbar">
+          <span className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest pl-3 pr-2">Weather</span>
           {WEATHERS.map(w => (
             <button
               key={w}
               onClick={() => handleWeatherChange(w)}
-              className={`p-1.5 rounded-lg text-lg transition-all ${weather === w ? 'bg-blue-100 dark:bg-blue-900/40 scale-110' : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 grayscale hover:grayscale-0'}`}
+              className={`p-1.5 rounded-full text-lg transition-all ${weather === w ? 'bg-black/5 dark:bg-white/10 scale-110' : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02] grayscale hover:grayscale-0 opacity-50 hover:opacity-100'}`}
               title="Set Weather"
             >
               {w}
@@ -301,13 +308,13 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       </div>
 
       {/* Title Input & Save Status */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-lg flex items-center justify-between space-x-4">
+      <div className="flex items-center justify-between space-x-4 mt-6 mb-2">
         <input
           type="text"
           value={title}
           onChange={handleTitleChange}
           placeholder="Entry Title..."
-          className="w-full bg-transparent text-2xl font-bold text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none"
+          className="w-full bg-transparent text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100 placeholder-neutral-300 dark:placeholder-neutral-800 focus:outline-none"
         />
         
         {/* Status Indicator */}
@@ -319,27 +326,27 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
             }
           }}
           disabled={saveStatus === 'saved' || saveStatus === 'saving'}
-          className={`flex-shrink-0 flex items-center space-x-2 whitespace-nowrap px-3 py-1.5 rounded-lg transition-colors ${
-            saveStatus !== 'saved' && saveStatus !== 'saving' ? 'hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer active:scale-95' : 'cursor-default'
+          className={`flex-shrink-0 flex items-center space-x-2 whitespace-nowrap px-4 py-2 rounded-full border border-black/5 dark:border-white/5 bg-white dark:bg-white/[0.02] shadow-sm dark:shadow-none transition-colors ${
+            saveStatus !== 'saved' && saveStatus !== 'saving' ? 'hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer active:scale-95' : 'cursor-default'
           }`}
           title={saveStatus === 'unsaved' || saveStatus === 'error' ? 'Click to save now' : ''}
         >
-          <div className={`w-2 h-2 rounded-full ${
-            saveStatus === 'saved' ? 'bg-green-500' :
+          <div className={`w-1.5 h-1.5 rounded-full ${
+            saveStatus === 'saved' ? 'bg-neutral-300 dark:bg-neutral-600' :
             saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' :
             saveStatus === 'error' ? 'bg-red-500' :
             'bg-amber-500'
           }`} />
-          <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-            {saveStatus === 'saved' && 'Saved'}
-            {saveStatus === 'saving' && 'Saving'}
-            {saveStatus === 'unsaved' && 'Unsaved'}
-            {saveStatus === 'error' && 'Retry Save'}
+          <span className="text-[10px] font-mono font-medium uppercase tracking-widest text-neutral-500 dark:text-neutral-500 mt-px">
+            {saveStatus === 'saved' && '[ SAVED ]'}
+            {saveStatus === 'saving' && '[ ENCRYPTING ]'}
+            {saveStatus === 'unsaved' && '[ UNSAVED ]'}
+            {saveStatus === 'error' && '[ ERROR - RETRY ]'}
           </span>
         </button>
       </div>
       {/* Toolbar */}
-      <div className="sticky top-4 z-10 flex items-center justify-between bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-neutral-200 dark:border-neutral-800 p-2 rounded-xl shadow-lg">
+      <div className="sticky top-4 z-10 flex items-center justify-between bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-black/5 dark:border-white/5 p-1.5 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none mb-6">
         <div className="flex items-center space-x-1 overflow-x-auto custom-scrollbar whitespace-nowrap min-w-0 pr-2">
           <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
@@ -436,7 +443,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       </div>
 
       {/* Editor Content */}
-      <div className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 sm:p-8 shadow-2xl overflow-y-auto custom-scrollbar w-full ${
+      <div className={`bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-3xl p-6 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-none overflow-y-auto custom-scrollbar w-full ${
         isFullscreen ? 'flex-1 min-h-[70vh] max-h-none' : 'min-h-[60vh] max-h-[75vh]'
       }`}>
         <EditorContent editor={editor} />

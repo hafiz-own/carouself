@@ -106,7 +106,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
         nonce: sodium.to_hex(newNonce),
         date: entry.date
       });
-      trpcUtils.entry.getEntries.invalidate();
+      trpcUtils.entry.invalidate();
     } catch (error) {
       console.error('Rename failed', error);
       setAlertMessage({ title: 'Error', message: 'Failed to rename entry. Did your key change?' });
@@ -123,7 +123,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
     if (!entryToDelete) return;
     try {
       await deleteMutation.mutateAsync({ id: entryToDelete });
-      trpcUtils.entry.getEntries.invalidate();
+      trpcUtils.entry.invalidate();
       if (selectedEntryId === entryToDelete) {
         onSelectEntry(null);
       }
@@ -233,14 +233,14 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
 
   return (
     <>
-      <div className={`fixed inset-y-0 left-0 z-50 md:relative transition-all duration-300 ease-in-out border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 flex flex-col h-screen overflow-hidden ${isOpen ? 'w-[85vw] max-w-[320px] md:w-80 opacity-100 translate-x-0' : 'w-[85vw] max-w-[320px] md:w-0 opacity-0 md:border-r-0 -translate-x-full md:translate-x-0'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 md:relative transition-all duration-300 ease-in-out border-r border-black/5 dark:border-white/5 bg-[#f8f7f4] dark:bg-[#0a0a12] flex flex-col h-screen overflow-hidden ${isOpen ? 'w-[85vw] max-w-[320px] md:w-80 opacity-100 translate-x-0' : 'w-[85vw] max-w-[320px] md:w-0 opacity-0 md:border-r-0 -translate-x-full md:translate-x-0'}`}>
         <div className="w-full max-w-[320px] md:w-80 flex flex-col h-screen overflow-y-auto">
         <div className="p-4 pb-2 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between px-2 mb-4">
             <button 
               onClick={() => onSelectEntry('dashboard')} 
-              className={`text-lg font-bold tracking-tight transition-colors ${selectedEntryId === undefined ? 'text-amber-500' : 'text-neutral-800 dark:text-neutral-200 hover:text-amber-500'}`}
+              className={`text-xl font-bold tracking-tight transition-colors ${selectedEntryId === undefined ? 'text-neutral-900 dark:text-white' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'}`}
             >
               carouself
             </button>
@@ -255,21 +255,21 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
 
           <button 
             onClick={() => onSelectEntry(null)}
-            className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg shadow-amber-500/20 py-3 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all transform active:scale-95 mb-2"
+            className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 shadow-[0_4px_14px_rgba(0,0,0,0.1)] dark:shadow-[0_0_14px_rgba(255,255,255,0.1)] py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center space-x-2 transition-all hover:-translate-y-0.5 active:scale-95 mb-2"
           >
-            <PenTool size={18} />
+            <PenTool size={16} />
             <span>Write New Entry</span>
           </button>
           
           {/* Search Bar */}
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-neutral-500 group-focus-within:text-amber-400 transition-colors" />
+            <Search className="h-4 w-4 text-neutral-500 transition-colors" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-10 py-2.5 border border-neutral-200 dark:border-neutral-800 rounded-xl leading-5 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all sm:text-sm shadow-inner"
-            placeholder="Search journal..."
+            className="block w-full pl-9 pr-9 py-2 border border-black/5 dark:border-white/5 rounded-full leading-5 bg-black/[0.02] dark:bg-white/[0.02] text-neutral-900 dark:text-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all text-xs"
+            placeholder="Search vault..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -284,7 +284,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
         </div>
       </div>
 
-      <div className="flex-1 px-4 overflow-y-auto space-y-1 pb-24 custom-scrollbar">
+      <div className="flex-1 px-4 pt-2 overflow-y-auto space-y-1 pb-24 custom-scrollbar">
         {searchQuery ? (
           <>
             <h3 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3 px-2 flex justify-between">
@@ -300,16 +300,16 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
               <button
                 key={result.id}
                 onClick={() => onSelectEntry(result.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 ${
                   selectedEntryId === result.id
-                    ? 'bg-neutral-100 dark:bg-neutral-800 text-amber-300 shadow-inner'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200'
+                    ? 'bg-black/[0.03] dark:bg-white/5 text-neutral-900 dark:text-white'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200'
                 } ${openDropdownId === result.id ? 'z-50' : 'z-10'}`}
               >
-                <span className={`text-sm font-semibold truncate pr-6 ${selectedEntryId === result.id ? 'text-amber-400' : 'text-neutral-700 dark:text-neutral-300'}`}>
+                <span className={`text-sm font-semibold truncate pr-6 ${selectedEntryId === result.id ? 'text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                   {result.title}
                 </span>
-                <span className="text-xs text-neutral-500 line-clamp-2 leading-relaxed pr-2">
+                <span className="text-[11px] font-mono tracking-wide text-neutral-500 line-clamp-2 leading-relaxed pr-2">
                   {result.snippet}
                 </span>
 
@@ -356,17 +356,17 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                 <button
                   key={entry.id}
                   onClick={() => onSelectEntry(entry.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                  className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 ${
                     selectedEntryId === entry.id
-                      ? 'bg-neutral-100 dark:bg-neutral-800 text-amber-300 shadow-inner'
-                      : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200'
+                      ? 'bg-black/[0.03] dark:bg-white/5 text-neutral-900 dark:text-white'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200'
                   } ${openDropdownId === entry.id ? 'z-50' : 'z-10'}`}
                 >
-                  <span className={`font-semibold text-sm truncate pr-6 flex items-center space-x-1.5 ${selectedEntryId === entry.id ? 'text-amber-400' : 'text-neutral-800 dark:text-neutral-200'}`}>
+                  <span className={`font-semibold text-sm truncate pr-6 flex items-center space-x-1.5 ${selectedEntryId === entry.id ? 'text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                     {entry.mood && <span>{entry.mood}</span>}
                     <span>{entry.title}</span>
                   </span>
-                  <div className="flex items-center space-x-2 text-xs text-neutral-500 pr-2">
+                  <div className="flex items-center space-x-2 text-[10px] font-mono tracking-widest uppercase text-neutral-500 pr-2">
                     <span>{new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                     <span>&bull;</span>
                     <span>{new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
@@ -420,20 +420,20 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
       </div>
 
       {/* Settings Button (Bottom Pinned) */}
-      <div className="p-3 mt-auto border-t border-neutral-200 dark:border-neutral-800 shrink-0 flex items-center justify-between">
+      <div className="p-3 mt-auto border-t border-black/5 dark:border-white/5 shrink-0 flex items-center justify-between bg-[#f8f7f4] dark:bg-[#0a0a12]">
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+          className="flex-1 flex items-center space-x-3 px-3 py-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
         >
-          <Settings size={18} />
-          <span className="font-medium text-sm">Settings</span>
+          <Settings size={18} strokeWidth={1.5} />
+          <span className="font-mono text-[10px] tracking-widest uppercase mt-px">Settings</span>
         </button>
         <button
           onClick={toggleTheme}
           title="Toggle Theme"
-          className="p-2 ml-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+          className="p-2 ml-2 rounded-lg text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
         </button>
       </div>
       </div>
