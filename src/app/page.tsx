@@ -44,7 +44,7 @@ const features = [
     icon: PenTool,
     color: 'rose',
     title: 'Zen Writing Mode',
-    description: 'A beautiful, distraction-free rich-text editor designed to fade into the background and let your thoughts flow seamlessly.',
+    description: 'A beautiful, distraction-free rich-text editor that fades into the background. Express yourself seamlessly with markdown support and lightning-fast inline emojis (type : anywhere).',
   },
   {
     size: 'large',

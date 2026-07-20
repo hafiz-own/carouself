@@ -11,7 +11,9 @@ import TaskItem from '@tiptap/extension-task-item';
 import CodeBlock from '@tiptap/extension-code-block';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
-import { Bold, Italic, Heading1, Heading2, List, ListOrdered, Quote, Underline as UnderlineIcon, Highlighter, CheckSquare, Code, AlignLeft, AlignCenter, AlignRight, Link as LinkIcon, Download, Trash2, Maximize, Minimize } from 'lucide-react';
+import Emoji from '@tiptap/extension-emoji';
+import { emojiSuggestion } from './editor/emojiSuggestion';
+import { Bold, Italic, Heading1, Heading2, List, ListOrdered, Quote, Underline as UnderlineIcon, Highlighter, CheckSquare, Code, AlignLeft, AlignCenter, AlignRight, Link as LinkIcon, Download, Trash2, Maximize, Minimize, Smile } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { encryptEntry } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
@@ -52,7 +54,7 @@ const extensions = [
     link: false,
   }),
   Placeholder.configure({
-    placeholder: 'Write your thoughts here...',
+    placeholder: 'Write your thoughts here... (Type \':\' for emojis)',
     emptyEditorClass: 'is-editor-empty',
   }),
   Underline,
@@ -62,6 +64,10 @@ const extensions = [
   CodeBlock,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
   Link.configure({ openOnClick: false }),
+  Emoji.configure({
+    enableEmoticons: true,
+    suggestion: emojiSuggestion,
+  }),
 ];
 
 export function JournalEditor({ encKey, initialTitle = '', initialContent = '', initialMood = '', initialWeather = '', entryId: initialEntryId, onDelete, onSaveSuccess }: JournalEditorProps) {
@@ -423,6 +429,9 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
           </ToolbarButton>
           <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')}>
             <Code size={16} />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().insertContent(':').run()} title="Insert Emoji">
+            <Smile size={16} />
           </ToolbarButton>
           
           <div className="w-px h-6 bg-neutral-100 dark:bg-neutral-800 mx-1" />

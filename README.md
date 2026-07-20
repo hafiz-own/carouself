@@ -8,6 +8,7 @@ carouself is a premium, zero-knowledge, end-to-end encrypted digital journaling 
 - **Distraction-Free Interface**: A minimalist, typography-driven UI utilizing Geist and Geist Mono. Features seamless dark/light modes, dynamic micro-animations, and an intuitive sidebar.
 - **Journal Dashboard**: Track your writing habit with statistics like Total Words, Entry Count, and Current Streak, alongside an interactive memory carousel of your recent entries.
 - **Rich Text Editing**: A robust, markdown-compatible rich text editor powered by Tiptap, engineered to safely encrypt HTML output before it ever leaves your device.
+- **Inline Emojis**: A lightning-fast, Slack-style inline emoji picker natively integrated into the editor. Type `:` to instantly express yourself without touching the mouse.
 
 ## Architecture & Security Implementation
 
