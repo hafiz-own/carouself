@@ -353,7 +353,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
               <div className="px-2 text-sm text-neutral-600">No entries yet.</div>
             ) : (
               decryptedEntries.map((entry) => (
-                <button
+                <div
                   key={entry.id}
                   onClick={() => onSelectEntry(entry.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg transition-all flex flex-col space-y-1 cursor-pointer relative group focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 ${
@@ -361,6 +361,14 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                       ? 'bg-black/[0.03] dark:bg-white/5 text-neutral-900 dark:text-white'
                       : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200'
                   } ${openDropdownId === entry.id ? 'z-50' : 'z-10'}`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectEntry(entry.id);
+                    }
+                  }}
                 >
                   <span className={`font-semibold text-sm truncate pr-6 flex items-center space-x-1.5 ${selectedEntryId === entry.id ? 'text-neutral-900 dark:text-white' : 'text-neutral-700 dark:text-neutral-300'}`}>
                     {entry.mood && <span>{entry.mood}</span>}
@@ -402,7 +410,7 @@ export function JournalSidebar({ onSelectEntry, selectedEntryId, encKey, isOpen,
                       </button>
                     </div>
                   )}
-                </button>
+                </div>
               ))
             )}
             

@@ -48,6 +48,8 @@ const ToolbarButton = ({ onClick, isActive, disabled, children }: { onClick: () 
 const extensions = [
   StarterKit.configure({
     codeBlock: false,
+    underline: false,
+    link: false,
   }),
   Placeholder.configure({
     placeholder: 'Write your thoughts here...',
@@ -70,6 +72,17 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
   const [weather, setWeather] = useState(initialWeather);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editorFont, setEditorFont] = useState('editor-font-sans');
+
+  useEffect(() => {
+    const handleFontUpdate = () => {
+      const font = window.localStorage.getItem('editorFont') || 'editor-font-sans';
+      setEditorFont(font);
+    };
+    handleFontUpdate();
+    window.addEventListener('settings_updated', handleFontUpdate);
+    return () => window.removeEventListener('settings_updated', handleFontUpdate);
+  }, []);
   
   const saveMutation = trpc.entry.saveEntry.useMutation();
   const deleteMutation = trpc.entry.deleteEntry.useMutation();
@@ -445,7 +458,7 @@ export function JournalEditor({ encKey, initialTitle = '', initialContent = '', 
       {/* Editor Content */}
       <div className={`bg-white dark:bg-[#12121e] border border-black/[0.04] dark:border-white/5 rounded-3xl p-6 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-none overflow-y-auto custom-scrollbar w-full ${
         isFullscreen ? 'flex-1 min-h-[70vh] max-h-none' : 'min-h-[60vh] max-h-[75vh]'
-      }`}>
+      } ${editorFont}`} onClick={() => editor.commands.focus()}>
         <EditorContent editor={editor} />
       </div>
     </div>

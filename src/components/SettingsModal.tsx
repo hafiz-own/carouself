@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Download, Trash2, Moon, Sun, Monitor } from 'lucide-react';
+import { X, Download, Trash2, Moon, Sun, Monitor, Lock, Type, Clock, ShieldAlert, User, Palette, Database } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { decryptEntry, generateSalt, deriveMasterKey, deriveAuthKey, deriveEncKey, encryptDEK, decryptDEK } from '@/lib/crypto/core';
 import sodium from 'libsodium-wrappers-sumo';
@@ -18,8 +18,14 @@ interface SettingsModalProps {
   encKey: Uint8Array | null;
 }
 
+type Tab = 'appearance' | 'privacy' | 'account' | 'data';
+
 export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('appearance');
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('system');
+  const [font, setFont] = useState('editor-font-sans');
+  const [autoLock, setAutoLock] = useState('never');
+
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -38,14 +44,16 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
 
   useEffect(() => {
     const localTheme = window.localStorage.getItem('theme') as 'dark' | 'light' | null;
-    if (localTheme) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTheme(localTheme);
-    }
-  }, []);
+    if (localTheme) setTheme(localTheme);
+
+    const localFont = window.localStorage.getItem('editorFont') || 'editor-font-sans';
+    setFont(localFont);
+
+    const localLock = window.localStorage.getItem('autoLock') || 'never';
+    setAutoLock(localLock);
+  }, [isOpen]);
 
   useEffect(() => {
-    // Basic theme toggle logic
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       window.localStorage.setItem('theme', 'dark');
@@ -53,7 +61,6 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
       document.documentElement.classList.remove('dark');
       window.localStorage.setItem('theme', 'light');
     } else {
-      // System
       window.localStorage.removeItem('theme');
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
@@ -62,6 +69,13 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
       }
     }
   }, [theme]);
+
+  const updateSetting = (key: string, value: string) => {
+    window.localStorage.setItem(key, value);
+    window.dispatchEvent(new Event('settings_updated'));
+    if (key === 'editorFont') setFont(value);
+    if (key === 'autoLock') setAutoLock(value);
+  };
 
   if (!isOpen) return null;
 
@@ -73,7 +87,6 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
 
     setIsExporting(true);
     try {
-      // Fetch all encrypted entries
       const entries = await trpcUtils.entry.getAllEntries.fetch();
 
       if (entries.length === 0) {
@@ -84,7 +97,6 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
 
       const zip = new JSZip();
 
-      // Decrypt all entries and add to zip
       entries.forEach(entry => {
         try {
           const ciphertextBytes = sodium.from_hex(entry.ciphertext);
@@ -102,10 +114,7 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
             // legacy plain HTML
           }
 
-          // Convert HTML to clean plain text
           const textContent = convert(htmlContent, { wordwrap: 130 });
-
-          // Generate a clean file name
           const cleanTitle = title.trim().replace(/[^a-z0-9_-]/gi, '_') || 'Untitled';
           const filename = `${entry.date}_${cleanTitle}.txt`;
 
@@ -115,7 +124,6 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
         }
       });
 
-      // Generate the zip and trigger download
       const content = await zip.generateAsync({ type: 'blob' });
       const zipFilename = `Carouself_Export_${new Date().toISOString().split('T')[0]}.zip`;
       saveAs(content, zipFilename);
@@ -134,7 +142,6 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
     try {
       await deleteAccountMutation.mutateAsync();
       toast.success("Account permanently deleted.");
-      // Hard reload to clear memory context completely
       window.location.href = '/signup';
     } catch (error) {
       console.error(error);
@@ -170,29 +177,23 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
     setPasswordError(null);
 
     try {
-      // Fetch current salt & encrypted DEK to verify old password
       const { salt: hexSalt, encryptedDek, dekNonce } = await trpcUtils.client.auth.getSalt.query({ email: me.email });
       const oldSaltBytes = sodium.from_hex(hexSalt);
-
       const oldMasterKey = await deriveMasterKey(oldPassword, oldSaltBytes);
       const oldKek = deriveEncKey(oldMasterKey);
 
-      // Verify old password by trying to decrypt the DEK
       try {
         decryptDEK(sodium.from_hex(encryptedDek), sodium.from_hex(dekNonce), oldKek);
       } catch (err) {
         throw new Error("Incorrect current password");
       }
 
-      // Generate new cryptography
       const newSaltBytes = generateSalt();
       const newMasterKey = await deriveMasterKey(newPassword, newSaltBytes);
       const newAuthKeyBytes = deriveAuthKey(newMasterKey);
       const newKek = deriveEncKey(newMasterKey);
 
-      // Encrypt the current DEK (encKey) with the NEW KEK
       const { ciphertext: newEncryptedDekBytes, nonce: newDekNonceBytes } = encryptDEK(encKey, newKek);
-
       const oldAuthKeyBytes = deriveAuthKey(oldMasterKey);
 
       await changePasswordMutation.mutateAsync({
@@ -214,6 +215,17 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
     }
   };
 
+  const handleImmediateLock = () => {
+    window.location.reload();
+  };
+
+  const tabs: { id: Tab; label: string; icon: any }[] = [
+    { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'privacy', label: 'Privacy', icon: ShieldAlert },
+    { id: 'account', label: 'Account', icon: User },
+    { id: 'data', label: 'Data', icon: Database },
+  ];
+
   return (
     <>
       <ConfirmDialog
@@ -225,125 +237,251 @@ export function SettingsModal({ isOpen, onClose, encKey }: SettingsModalProps) {
         onConfirm={confirmDeleteAccount}
         onClose={() => setIsDeleteConfirmOpen(false)}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 w-[95vw] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
 
-        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Settings</h2>
-          <button onClick={onClose} className="p-1 rounded-md text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity"
+        onClick={onClose}
+      >
+        {/* Centered Modal */}
+        <div
+          className="w-full max-w-4xl bg-white dark:bg-[#12121e] border border-black/5 dark:border-white/5 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[85vh] md:h-[600px] animate-in zoom-in-95 duration-200"
+          onClick={e => e.stopPropagation()}
+        >
 
-        <div className="p-6 space-y-8">
+          {/* Mobile Header (Only visible on small screens) */}
+          <div className="md:hidden flex items-center justify-between p-4 border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-[#12121e]/50 backdrop-blur-md">
+            <h2 className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white">Settings</h2>
+            <button onClick={onClose} className="p-2 rounded-full text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
 
-          {/* Theme Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Appearance</h3>
-            <div className="flex bg-neutral-50 dark:bg-neutral-950 p-1 rounded-xl border border-neutral-200 dark:border-neutral-800">
+          {/* Left Navigation Sidebar */}
+          <div className="w-full md:w-64 bg-black/[0.02] dark:bg-white/[0.02] border-b md:border-b-0 md:border-r border-black/5 dark:border-white/5 flex flex-col">
+            <div className="hidden md:flex items-center justify-between p-6 pb-2">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">Settings</h2>
+                <p className="text-[10px] font-mono text-neutral-500 mt-1 truncate max-w-[180px]" title={me?.email}>{me?.email}</p>
+              </div>
+            </div>
+
+            <nav className="p-4 md:p-3 space-x-2 md:space-x-0 md:space-y-1 flex md:flex-col overflow-x-auto md:overflow-x-visible hide-scrollbar mt-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-3 px-4 md:px-3 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                    ? 'bg-white dark:bg-white/10 text-neutral-900 dark:text-white shadow-sm border border-black/[0.04] dark:border-white/5 md:border-none md:shadow-none'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] hover:text-neutral-900 dark:hover:text-neutral-200'
+                    }`}
+                >
+                  <tab.icon size={16} className={activeTab === tab.id ? 'text-amber-500' : ''} />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="hidden md:flex mt-auto p-4 pb-6">
               <button
-                onClick={() => setTheme('system')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-2 text-sm rounded-lg transition-colors ${theme === 'system' ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 dark:hover:text-neutral-100'}`}
+                onClick={handleImmediateLock}
+                className="w-full flex items-center justify-center space-x-2 p-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-white/10 dark:hover:bg-white/20 text-white rounded-lg font-medium text-xs transition-colors"
               >
-                <Monitor size={16} /> <span>System</span>
-              </button>
-              <button
-                onClick={() => setTheme('light')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-2 text-sm rounded-lg transition-colors ${theme === 'light' ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 dark:hover:text-neutral-100'}`}
-              >
-                <Sun size={16} /> <span>Light</span>
-              </button>
-              <button
-                onClick={() => setTheme('dark')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-2 text-sm rounded-lg transition-colors ${theme === 'dark' ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white shadow' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-300 dark:hover:text-neutral-100'}`}
-              >
-                <Moon size={16} /> <span>Dark</span>
+                <Lock size={14} />
+                <span>Lock Vault Now</span>
               </button>
             </div>
           </div>
 
-          {/* Account & Security Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Account & Security</h3>
-            
-            <form onSubmit={handleChangePassword} className="p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl space-y-4">
-              <h4 className="font-medium text-neutral-900 dark:text-neutral-100 mb-2">Change Password</h4>
-              
-              {passwordError && (
-                <div className="p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center">
-                  {passwordError}
+          {/* Right Content Area */}
+          <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar relative bg-white dark:bg-[#12121e]">
+
+            {/* Desktop Close Button */}
+            <div className="hidden md:block absolute top-4 right-4 z-10">
+              <button onClick={onClose} className="p-2 rounded-full text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 md:p-10 max-w-2xl w-full">
+
+              {/* APPEARANCE TAB */}
+              {activeTab === 'appearance' && (
+                <div className="space-y-10 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Theme</h3>
+                    <div className="flex bg-black/[0.03] dark:bg-white/5 p-1 rounded-xl border border-black/[0.04] dark:border-white/5 max-w-sm">
+                      <button
+                        onClick={() => setTheme('system')}
+                        className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg transition-all ${theme === 'system' ? 'bg-white dark:bg-[#1f1f2e] text-neutral-900 dark:text-white shadow-sm border border-black/[0.04] dark:border-white/5' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
+                      >
+                        <Monitor size={16} /> <span className="text-xs font-medium">System</span>
+                      </button>
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg transition-all ${theme === 'light' ? 'bg-white dark:bg-[#1f1f2e] text-neutral-900 dark:text-white shadow-sm border border-black/[0.04] dark:border-white/5' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
+                      >
+                        <Sun size={16} /> <span className="text-xs font-medium">Light</span>
+                      </button>
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-lg transition-all ${theme === 'dark' ? 'bg-white dark:bg-[#1f1f2e] text-neutral-900 dark:text-white shadow-sm border border-black/[0.04] dark:border-white/5' : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'}`}
+                      >
+                        <Moon size={16} /> <span className="text-xs font-medium">Dark</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Editor Typography</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { id: 'editor-font-sans', label: 'Sans-Serif', style: 'font-sans' },
+                        { id: 'editor-font-serif', label: 'Serif', style: 'font-serif' },
+                        { id: 'editor-font-mono', label: 'Monospace', style: 'font-mono' },
+                        { id: 'editor-font-comic', label: 'Comic Sans', style: 'font-comic' },
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => updateSetting('editorFont', f.id)}
+                          className={`flex items-center justify-between px-5 py-4 rounded-xl border transition-all ${font === f.id ? 'bg-black/[0.03] dark:bg-white/5 border-neutral-300 dark:border-neutral-600' : 'bg-transparent border-black/[0.04] dark:border-white/5 hover:border-black/20 dark:hover:border-white/20'}`}
+                        >
+                          <span className={`text-base font-medium text-neutral-800 dark:text-neutral-200 ${f.style}`}>{f.label}</span>
+                          {font === f.id && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={oldPassword}
-                onChange={e => setOldPassword(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none"
-              />
-              <input
-                type="password"
-                placeholder="New Password (min 12 chars)"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none"
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 outline-none"
-              />
-              <button
-                type="submit"
-                disabled={isChangingPassword}
-                className="w-full bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-medium py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
-              >
-                {isChangingPassword ? "Changing..." : "Update Password"}
-              </button>
-            </form>
+              {/* PRIVACY TAB */}
+              {activeTab === 'privacy' && (
+                <div className="space-y-10 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Auto-Lock Vault</h3>
+                    <div className="space-y-3">
+                      <select
+                        value={autoLock}
+                        onChange={(e) => updateSetting('autoLock', e.target.value)}
+                        className="w-full max-w-sm bg-white dark:bg-[#1a1a24] border border-black/10 dark:border-white/10 rounded-lg px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 outline-none focus:border-neutral-400 dark:focus:border-neutral-500 transition-colors cursor-pointer"
+                      >
+                        <option value="never">Never (Stay Unlocked)</option>
+                        <option value="5">After 5 Minutes of Inactivity</option>
+                        <option value="15">After 15 Minutes of Inactivity</option>
+                        <option value="30">After 30 Minutes of Inactivity</option>
+                      </select>
+                      <p className="text-sm text-neutral-500">Automatically clears your encryption key from volatile memory if you step away. You will need your master password to unlock the vault again.</p>
+                    </div>
+                  </div>
+
+                  <div className="md:hidden">
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Manual Lock</h3>
+                    <button
+                      onClick={handleImmediateLock}
+                      className="w-full flex items-center justify-center space-x-2 p-3 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded-xl font-medium text-sm transition-colors"
+                    >
+                      <Lock size={16} />
+                      <span>Lock Vault Now</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ACCOUNT TAB */}
+              {activeTab === 'account' && (
+                <div className="space-y-10 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Change Master Password</h3>
+
+                    <form onSubmit={handleChangePassword} className="p-6 bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/5 rounded-2xl space-y-4 max-w-md">
+                      {passwordError && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 dark:text-red-400 text-xs font-medium">
+                          {passwordError}
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <input
+                          type="password"
+                          placeholder="Current Password"
+                          value={oldPassword}
+                          onChange={e => setOldPassword(e.target.value)}
+                          className="w-full bg-white dark:bg-[#1a1a24] border border-black/10 dark:border-white/10 focus:border-neutral-400 dark:focus:border-neutral-500 rounded-lg px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 outline-none transition-colors"
+                        />
+                        <div className="pt-2">
+                          <input
+                            type="password"
+                            placeholder="New Password (min 12 chars)"
+                            value={newPassword}
+                            onChange={e => setNewPassword(e.target.value)}
+                            className="w-full bg-white dark:bg-[#1a1a24] border border-black/10 dark:border-white/10 focus:border-neutral-400 dark:focus:border-neutral-500 rounded-lg px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 outline-none transition-colors"
+                          />
+                        </div>
+                        <input
+                          type="password"
+                          placeholder="Confirm New Password"
+                          value={confirmPassword}
+                          onChange={e => setConfirmPassword(e.target.value)}
+                          className="w-full bg-white dark:bg-[#1a1a24] border border-black/10 dark:border-white/10 focus:border-neutral-400 dark:focus:border-neutral-500 rounded-lg px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 outline-none transition-colors"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isChangingPassword}
+                        className="w-full mt-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 rounded-lg text-sm transition-colors disabled:opacity-50"
+                      >
+                        {isChangingPassword ? "Updating..." : "Update Password"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* DATA TAB */}
+              {activeTab === 'data' && (
+                <div className="space-y-10 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-mono font-semibold text-neutral-400 uppercase tracking-widest mb-4">Export</h3>
+                    <button
+                      onClick={handleExport}
+                      disabled={isExporting}
+                      className="w-full max-w-md flex items-center justify-between p-4 bg-white dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 rounded-2xl transition-all text-left group disabled:opacity-50"
+                    >
+                      <div>
+                        <div className="font-medium text-sm text-neutral-900 dark:text-neutral-100">Export Journal Data</div>
+                        <div className="text-xs text-neutral-500 mt-1 font-mono">Decrypt &amp; Download (.zip)</div>
+                      </div>
+                      <div className="p-2 bg-black/[0.03] dark:bg-white/5 rounded-lg group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
+                        <Download size={16} className="text-neutral-700 dark:text-neutral-300" />
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="pt-8 border-t border-red-900/10 dark:border-red-900/30 max-w-md">
+                    <h3 className="text-[10px] font-mono font-bold text-red-500 uppercase tracking-widest mb-4">Danger Zone</h3>
+
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                      className="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-2xl transition-all text-left group disabled:opacity-50"
+                    >
+                      <div>
+                        <div className="font-medium text-sm text-red-700 dark:text-red-400">Delete Account</div>
+                        <div className="text-xs text-red-600/70 dark:text-red-500/70 mt-1 font-mono">Destroy all data permanently.</div>
+                      </div>
+                      <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+                        <Trash2 size={16} className="text-red-600 dark:text-red-400" />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
-
-          {/* Data Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">Data & Privacy</h3>
-
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="w-full flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 hover:border-amber-500/50 hover:bg-amber-900/10 rounded-xl transition-all text-left group disabled:opacity-50"
-            >
-              <div>
-                <div className="font-medium text-neutral-800 dark:text-neutral-200 group-hover:text-amber-400 transition-colors">Export Journal Data</div>
-                <div className="text-xs text-neutral-500 mt-1">Decrypt and download all entries as a ZIP of .txt files.</div>
-              </div>
-              <Download size={20} className="text-neutral-500 group-hover:text-amber-400 transition-colors" />
-            </button>
-
-          </div>
-
-          {/* Danger Zone */}
-          <div className="space-y-3 pt-4 border-t border-red-900/30">
-            <h3 className="text-sm font-semibold text-red-500 uppercase tracking-wider">Danger Zone</h3>
-
-            <button
-              onClick={handleDeleteAccount}
-              disabled={isDeleting}
-              className="w-full flex items-center justify-between p-4 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 rounded-xl transition-all text-left group disabled:opacity-50"
-            >
-              <div>
-                <div className="font-medium text-red-400">Delete Account</div>
-                <div className="text-xs text-red-500/70 mt-1">Permanently destroy all your data.</div>
-              </div>
-              <Trash2 size={20} className="text-red-500/50 group-hover:text-red-400 transition-colors" />
-            </button>
-          </div>
-
         </div>
       </div>
-    </div>
     </>
   );
 }

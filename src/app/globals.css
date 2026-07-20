@@ -42,6 +42,14 @@ body {
   overflow-x: hidden;
 }
 
+/* ─── Custom Editor Typography ─────────────────────────────────── */
+/* These utilize "Web Safe" system fonts that cost 0 bytes to load. */
+.editor-font-sans { font-family: var(--font-sans), system-ui, sans-serif; }
+.editor-font-serif { font-family: Georgia, 'Times New Roman', Times, serif; }
+.editor-font-mono { font-family: var(--font-mono), 'Courier New', Courier, monospace; }
+.editor-font-comic { font-family: 'Comic Sans MS', 'Comic Sans', cursive; }
+.editor-font-system { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
 /* ─── Scrollbar Hiding ─────────────────────────────────────────── */
 .hide-scrollbar {
   -ms-overflow-style: none;
